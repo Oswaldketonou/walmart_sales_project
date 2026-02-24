@@ -193,16 +193,40 @@ Weather and economic variables show minimal influence on weekly sales.
 
 ---
 
-# 9. Next Steps
+## 9. Next Steps
 
-- Build forecasting models (baseline → advanced)  
-- Evaluate using MAE, MAPE, RMSE, R²  
-- Deploy dashboard with KPIs and insights  
-- Add model results to this case study  
+With the baseline model established, the next phase of the project focuses on building progressively stronger forecasting models and evaluating their performance against the baseline benchmark.
+
+**Upcoming tasks include:**
+
+- Developing forecasting models, starting with linear regression and advancing to regularized and tree‑based methods  
+- Evaluating each model using MAE, MAPE, RMSE, and R²  
+- Comparing model performance against the baseline to determine meaningful improvement  
+- Integrating the best‑performing model into the analytics workflow  
+- Designing and deploying a dashboard to visualize KPIs, model performance, and business insights  
 
 ---
 
-# 10. Conclusion
+## Baseline Model Results
 
-This case study demonstrates a complete SQL-driven analytics workflow, from raw data to insights.  
-The analysis reveals clear patterns in Walmart’s weekly sales and provides a strong foundation for forecasting and business decision-making.
+The baseline model uses the previous week’s sales as the prediction for the current week.  
+This provides a simple but essential benchmark for evaluating more advanced models.
+
+**Baseline Performance:**
+
+- **MAE:** _X_  
+- **MAPE:** _X%_  
+- **RMSE:** _X_  
+- **R²:** _X_  
+
+These values represent the minimum performance that future models must exceed to be considered effective.  
+A model that does not outperform the baseline does not add predictive value.
+
+---
+
+## 10. Conclusion
+
+The baseline model establishes a strong foundation for the forecasting workflow.  
+With this benchmark in place, the next steps will focus on developing and evaluating more sophisticated models to improve predictive accuracy and support data‑driven decision‑making.
+
+
