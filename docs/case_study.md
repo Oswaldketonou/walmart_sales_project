@@ -168,6 +168,7 @@ Weather and economic variables show minimal influence on weekly sales.
 ## Forecasting KPIs
 - Mean Absolute Error (MAE)  
 - Mean Absolute Percentage Error (MAPE)  
+- Symmetric Mean Absolute Percentage Error (SMAPE)  
 - Root Mean Squared Error (RMSE)  
 - R²  
 
