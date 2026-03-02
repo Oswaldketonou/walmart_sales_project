@@ -141,7 +141,8 @@ Useful for pure time‑series patterns but less flexible with many features.
 The following KPIs will be used to evaluate model performance:
 
 - Mean Absolute Error (MAE)  
-- Mean Absolute Percentage Error (MAPE)  
+- Mean Absolute Percentage Error (MAPE)
+- Symmetric Mean Absolute Percentage Error (SMAPE)
 - Root Mean Squared Error (RMSE)  
 - R²  
 
