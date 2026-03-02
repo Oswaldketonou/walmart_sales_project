@@ -2,111 +2,99 @@
 -- Walmart Sales Forecasting Project
 -- 03_feature_engineering.sql
 -- Author: Waldo Ketonou | WaldoSphere Group LLC
--- Purpose: Create engineered features for modeling
+-- Purpose: Create feature-engineered dataset for modeling
+-- Notes: This reflects the exact workflow used in PostgreSQL
 -- =====================================================================
 
 
--- 1. CREATE BASE TABLE FROM CLEAN SALES DATA
--- This ensures we start from the cleaned dataset
+/*
+    Create a feature-engineered materialized view.
+    This combines:
+      - Lag features (1-week, 4-week)
+      - Rolling averages (4-week, 12-week)
+      - Holiday indicator
+      - Weather & economic data
+      - Store metadata
+      - Date-based features (week, month, year)
+    Source tables:
+      walmart_master (cleaned sales)
+      features_clean (weather/economic)
+      store_clean (store metadata)
+*/
 
-CREATE TABLE walmart_master_fe AS
+CREATE MATERIALIZED VIEW walmart_master_fe AS
 SELECT
-    store_id,
-    dept_id,
-    date,
-    weekly_sales,
-    holiday_flag
-FROM walmart_sales_clean
-ORDER BY store_id, dept_id, date;
+    -- Core identifiers
+    wm.store,
+    wm.dept,
+    wm.date,
+    wm.weekly_sales,
 
+    /* 
+       Lag Features
+       ---------------------------------------------------------------
+       lag_1_week  = previous week's sales
+       lag_4_weeks = sales from 4 weeks prior
+       --------------------------------------------------------------- */
+    LAG(wm.weekly_sales, 1) OVER (
+        PARTITION BY wm.store, wm.dept
+        ORDER BY wm.date
+    ) AS lag_1_week,
 
+    LAG(wm.weekly_sales, 4) OVER (
+        PARTITION BY wm.store, wm.dept
+        ORDER BY wm.date
+    ) AS lag_4_weeks,
 
--- 2. ADD DATE-BASED FEATURES
--- Extracts year, month, week, and day for seasonality patterns
+    /* 
+       Rolling Averages
+       ---------------------------------------------------------------
+       rolling_4_week  = average of current + previous 3 weeks
+       rolling_12_week = average of current + previous 11 weeks
+       --------------------------------------------------------------- */
+    AVG(wm.weekly_sales) OVER (
+        PARTITION BY wm.store, wm.dept
+        ORDER BY wm.date
+        ROWS BETWEEN 3 PRECEDING AND CURRENT ROW
+    ) AS rolling_4_week,
 
-ALTER TABLE walmart_master_fe
-ADD COLUMN year INT,
-ADD COLUMN month INT,
-ADD COLUMN week INT;
+    AVG(wm.weekly_sales) OVER (
+        PARTITION BY wm.store, wm.dept
+        ORDER BY wm.date
+        ROWS BETWEEN 11 PRECEDING AND CURRENT ROW
+    ) AS rolling_12_week,
 
-UPDATE walmart_master_fe
-SET
-    year = EXTRACT(YEAR FROM date),
-    month = EXTRACT(MONTH FROM date),
-    week = EXTRACT(WEEK FROM date);
+    /* 
+       Holiday Flag
+       --------------------------------------------------------------- */
+    wm.feature_is_holiday,
 
+    /* ---------------------------------------------------------------
+       Weather & Economic Features
+       --------------------------------------------------------------- */
+    f.temperature,
+    f.fuel_price,
+    f.cpi,
+    f.unemployment,
 
+    /* ---------------------------------------------------------------
+       Store Metadata
+       --------------------------------------------------------------- */
+    wm.store_type,
+    wm.store_size,
 
--- 3. ADD LAG FEATURES
--- Lag 1, 2, and 3 weeks of sales for forecasting
+    /* ---------------------------------------------------------------
+       Date Features
+       --------------------------------------------------------------- */
+    EXTRACT(WEEK FROM wm.date) AS week,
+    EXTRACT(MONTH FROM wm.date) AS month,
+    EXTRACT(YEAR FROM wm.date) AS year
 
-ALTER TABLE walmart_master_fe
-ADD COLUMN lag_1 NUMERIC,
-ADD COLUMN lag_2 NUMERIC,
-ADD COLUMN lag_3 NUMERIC;
-
-UPDATE walmart_master_fe fe
-SET lag_1 = sub.lag_1,
-    lag_2 = sub.lag_2,
-    lag_3 = sub.lag_3
-FROM (
-    SELECT
-        store_id,
-        dept_id,
-        date,
-        LAG(weekly_sales, 1) OVER (PARTITION BY store_id, dept_id ORDER BY date) AS lag_1,
-        LAG(weekly_sales, 2) OVER (PARTITION BY store_id, dept_id ORDER BY date) AS lag_2,
-        LAG(weekly_sales, 3) OVER (PARTITION BY store_id, dept_id ORDER BY date) AS lag_3
-    FROM walmart_master_fe
-) sub
-WHERE fe.store_id = sub.store_id
-  AND fe.dept_id = sub.dept_id
-  AND fe.date = sub.date;
-
-
-
--- 4. ADD ROLLING AVERAGE FEATURES
--- 3-week and 5-week rolling averages
-
-ALTER TABLE walmart_master_fe
-ADD COLUMN roll_avg_3 NUMERIC,
-ADD COLUMN roll_avg_5 NUMERIC;
-
-UPDATE walmart_master_fe fe
-SET roll_avg_3 = sub.roll_avg_3,
-    roll_avg_5 = sub.roll_avg_5
-FROM (
-    SELECT
-        store_id,
-        dept_id,
-        date,
-        AVG(weekly_sales) OVER (
-            PARTITION BY store_id, dept_id
-            ORDER BY date
-            ROWS BETWEEN 2 PRECEDING AND CURRENT ROW
-        ) AS roll_avg_3,
-        AVG(weekly_sales) OVER (
-            PARTITION BY store_id, dept_id
-            ORDER BY date
-            ROWS BETWEEN 4 PRECEDING AND CURRENT ROW
-        ) AS roll_avg_5
-    FROM walmart_master_fe
-) sub
-WHERE fe.store_id = sub.store_id
-  AND fe.dept_id = sub.dept_id
-  AND fe.date = sub.date;
-
-
-
--- 5. FINAL CLEAN FEATURE TABLE
--- Removes rows where lag/rolling features are NULL (first few weeks)
-
-CREATE TABLE walmart_master_fe_final AS
-SELECT *
-FROM walmart_master_fe
-WHERE lag_3 IS NOT NULL
-  AND roll_avg_5 IS NOT NULL
-ORDER BY store_id, dept_id, date;
+FROM walmart_master AS wm
+LEFT JOIN features_clean AS f
+    ON wm.date = f.date
+LEFT JOIN store_clean AS s
+    ON wm.store = s.store;
 
 -- =====================================================================
 -- END OF FEATURE ENGINEERING SCRIPT
