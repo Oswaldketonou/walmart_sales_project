@@ -3,17 +3,28 @@
 -- 05_modeling.sql
 -- Author: Waldo Ketonou | WaldoSphere Group LLC
 -- Purpose: Create clean modeling dataset for R modeling
+-- Notes: This reflects the exact workflow used in PostgreSQL
 -- =====================================================================
 
 
-/* 
-   Creating a clean modeling table (materialized view)
-   This table includes only the features used in the R modeling workflow.
-   All modeling (lm, predict, RMSE, MAE, MAPE, SMAPE) is done in R.
+/*
+    Create a clean modeling materialized view.
+    This dataset includes:
+      - Actual weekly sales
+      - Lag features (1-week, 4-week)
+      - Rolling averages (4-week, 12-week)
+      - Holiday indicator
+      - Weather & economic features
+      - Store metadata
+      - Date-based features (week, month, year)
+
+    All modeling (lm, predict, RMSE, MAE, MAPE, SMAPE)
+    is performed in R, not in SQL.
 */
 
 CREATE MATERIALIZED VIEW modeling_clean AS
 SELECT
+    -- Core identifiers
     store,
     dept,
     date,
@@ -27,10 +38,10 @@ SELECT
     rolling_4_week,
     rolling_12_week,
 
-    /* Holiday */
+    /* Holiday flag */
     feature_is_holiday,
 
-    /* Weather & economic */
+    /* Weather & economic features */
     temperature,
     fuel_price,
     cpi,
