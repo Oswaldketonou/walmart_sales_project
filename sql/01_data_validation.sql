@@ -24,20 +24,3 @@ SELECT
   MIN(date) AS earliest_date,
   MAX(date) AS latest_date
 FROM walmart_sales;
-
--- 5. Check for duplicate rows
-SELECT store_id, dept_id, date, COUNT(*) AS duplicate_count
-FROM walmart_sales
-GROUP BY store_id, dept_id, date
-HAVING COUNT(*) > 1;
-
--- 6. Detect outliers in weekly_sales
-SELECT
-  MIN(weekly_sales) AS min_sales,
-  MAX(weekly_sales) AS max_sales,
-  AVG(weekly_sales) AS avg_sales,
-  STDDEV(weekly_sales) AS stddev_sales
-FROM walmart_sales;
-
--- 7. Validate categorical values (if applicable)
-SELECT DISTINCT holiday_flag FROM walmart_sales;
