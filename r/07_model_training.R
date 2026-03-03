@@ -1,5 +1,7 @@
 ############################################################
+# Walmart Sales Forecasting Project
 # 07_model_train.R
+# Author: Waldo Ketonou | WaldoSphere Group LLC
 # Baseline Linear Model + Random Forest Scaling Experiments
 ############################################################
 
