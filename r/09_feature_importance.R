@@ -1,5 +1,7 @@
 ############################################################
+## Walmart Sales Forecasting Project
 # 09_feature_importance.R
+# Author: Waldo Ketonou | WaldoSphere Group LLC
 # Variable importance for RF_small, RF_medium, RF_large
 ############################################################
 
