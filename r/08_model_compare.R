@@ -1,5 +1,7 @@
 ############################################################
+# Walmart Sales Forecasting Project
 # 08_model_compare.R
+# Author: Waldo Ketonou | WaldoSphere Group LLC
 # Compare LM baseline vs. RF models (200k, 500k, 1M)
 ############################################################
 
