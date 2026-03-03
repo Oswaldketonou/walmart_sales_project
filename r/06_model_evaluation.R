@@ -24,80 +24,53 @@ con <- dbConnect(
   password = "mypasswordtopostegresql"
 )
 
-# -----------------------------
-# Load modeling_clean table
-# -----------------------------
-modeling <- dbGetQuery(con, "SELECT * FROM modeling_clean")
+###############################################
+# Time‑based train/test split for modeling
+###############################################
 
-# -----------------------------
-# Train/Test Split
-# -----------------------------
-modeling$date <- as.Date(modeling$date)
+#---------------------------------------------
+# 1. Load modeling_clean table
+#---------------------------------------------
+model_df <- dbReadTable(con, "modeling_clean")
 
-max_date <- max(modeling$date)
-cutoff_date <- max_date - 42   # last 6 weeks = test set
+# Quick uniqueness check
+sapply(model_df, function(x) length(unique(x)))
 
-train <- modeling %>% filter(date < cutoff_date)
-test  <- modeling %>% filter(date >= cutoff_date)
+# Inspect structure and preview
+str(model_df)
+head(model_df)
 
-# -----------------------------
-# Custom metric functions
-# -----------------------------
-rmse <- function(actual, predicted) sqrt(mean((actual - predicted)^2))
-mae  <- function(actual, predicted) mean(abs(actual - predicted))
-mape <- function(actual, predicted) mean(abs((actual - predicted) / actual)) * 100
-smape <- function(actual, predicted) {
-  mean(2 * abs(predicted - actual) / (abs(actual) + abs(predicted))) * 100
-}
+#---------------------------------------------
+# 2. Prepare categorical variables
+#---------------------------------------------
+model_df$store_type <- as.factor(model_df$store_type)
+model_df$feature_is_holiday <- as.factor(model_df$feature_is_holiday)
 
-# -----------------------------
-# Fit baseline linear regression model
-# -----------------------------
-model <- lm(
-  actual_sales ~ lag_1_week + lag_4_weeks +
-    rolling_4_week + rolling_12_week +
-    feature_is_holiday + temperature + fuel_price +
-    cpi + unemployment + store_type + store_size +
-    week + month + year,
-  data = train
-)
+#---------------------------------------------
+# 3. Prepare date + rename target variable
+#---------------------------------------------
+model_df$date <- as.Date(model_df$date)
 
-# -----------------------------
-# Generate predictions
-# -----------------------------
-test$predicted_sales <- predict(model, newdata = test)
+# Rename weekly_sales → actual_sales
+names(model_df)[names(model_df) == "weekly_sales"] <- "actual_sales"
 
-# -----------------------------
-# Fix NA predictions (if any)
-# -----------------------------
-test$predicted_sales[is.na(test$predicted_sales)] <- 
-  mean(train$actual_sales, na.rm = TRUE)
+#---------------------------------------------
+# 4. Time‑based train/test split
+#    Train: all data before 2012
+#    Test:  all data in 2012
+#---------------------------------------------
+train_df <- model_df %>% filter(year < 2012)
+test_df  <- model_df %>% filter(year == 2012)
 
-# -----------------------------
-# Calculate evaluation metrics
-# -----------------------------
-rmse_value  <- rmse(test$actual_sales, test$predicted_sales)
-mae_value   <- mae(test$actual_sales, test$predicted_sales)
-mape_value  <- mape(test$actual_sales, test$predicted_sales)
-smape_value <- smape(test$actual_sales, test$predicted_sales)
+#---------------------------------------------
+# 5. Validation checks
+#---------------------------------------------
+nrow(train_df)
+nrow(test_df)
 
-metrics <- data.frame(
-  Metric = c("RMSE", "MAE", "MAPE", "SMAPE"),
-  Value  = c(rmse_value, mae_value, mape_value, smape_value)
-)
+range(train_df$date)
+range(test_df$date)
 
-print(metrics)
-
-# -----------------------------
-# Save evaluation results
-# -----------------------------
-write.csv(metrics, "model_evaluation_results.csv", row.names = FALSE)
-
-# -----------------------------
-# Close database connection
-# -----------------------------
-dbDisconnect(con)
-
-# =====================================================================
-# END OF MODEL EVALUATION SCRIPT
-# =====================================================================
+###############################################
+# End of script
+###############################################
