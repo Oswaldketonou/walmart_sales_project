@@ -13,15 +13,13 @@ library(ggplot2)
 # 1. Prepare Evaluation Data
 # =====================================================================
 
-# Clean test set (same logic used in 07_model_training.R)
 test_clean <- test_df %>% filter(complete.cases(.))
 eval_actual <- test_clean$actual_sales
 
-# Predictions from trained models
-lm_pred      <- predict(lm_model, newdata = test_clean)
-rf_small_pred  <- predict(rf_small$model,  data = test_clean)$predictions
-rf_medium_pred <- predict(rf_medium$model, data = test_clean)$predictions
-rf_large_pred  <- predict(rf_large$model,  data = test_clean)$predictions
+lm_pred         <- predict(lm_model, newdata = test_clean)
+rf_small_pred   <- predict(rf_small$model,  data = test_clean)$predictions
+rf_medium_pred  <- predict(rf_medium$model, data = test_clean)$predictions
+rf_large_pred   <- predict(rf_large$model,  data = test_clean)$predictions
 
 # =====================================================================
 # 2. Define Metrics
@@ -70,7 +68,6 @@ print(compare_tbl)
 # 4. Visualization: Actual vs Predicted (Best Model)
 # =====================================================================
 
-# Identify best model by RMSE
 best_model_name <- compare_tbl$model[which.min(compare_tbl$RMSE)]
 
 if (best_model_name == "Linear Regression") {
