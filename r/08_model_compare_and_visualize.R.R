@@ -1,119 +1,140 @@
-# ============================================
+# =====================================================================
 # Walmart Sales Forecasting Project
 # 08_model_compare_and_visualize.R
 # Author: Waldo Ketonou | WaldoSphere Group LLC
-# Model Comparison + Visualizations
-# ============================================
+# Purpose: Compare model performance + generate evaluation visualizations
+# Requires: 06_model_evaluation.R and 07_model_training.R
+# =====================================================================
 
 library(dplyr)
 library(ggplot2)
-library(readr)
 
-# --------------------------------------------
-# 1. Load data, predictions, and utilities
-# --------------------------------------------
+# =====================================================================
+# 1. Prepare Evaluation Data
+# =====================================================================
 
-source("utils_metrics.R")
+# Clean test set (same logic used in 07_model_training.R)
+test_clean <- test_df %>% filter(complete.cases(.))
+eval_actual <- test_clean$actual_sales
 
-actuals <- read_csv("data/actuals_test.csv")
-pred_small  <- read_csv("data/pred_rf_small.csv")
-pred_medium <- read_csv("data/pred_rf_medium.csv")
-pred_large  <- read_csv("data/pred_rf_large.csv")
+# Predictions from trained models
+lm_pred      <- predict(lm_model, newdata = test_clean)
+rf_small_pred  <- predict(rf_small$model,  data = test_clean)$predictions
+rf_medium_pred <- predict(rf_medium$model, data = test_clean)$predictions
+rf_large_pred  <- predict(rf_large$model,  data = test_clean)$predictions
 
-# Merge predictions with actuals
-df <- actuals %>%
-  left_join(pred_small,  by = "id") %>%
-  left_join(pred_medium, by = "id") %>%
-  left_join(pred_large,  by = "id")
+# =====================================================================
+# 2. Define Metrics
+# =====================================================================
 
-# --------------------------------------------
-# 2. Compute metrics + comparison table
-# --------------------------------------------
+rmse <- function(a, p) sqrt(mean((p - a)^2))
+mae  <- function(a, p) mean(abs(p - a))
+mape <- function(a, p) mean(abs((p - a) / a)) * 100
+smape <- function(a, p) mean(2 * abs(p - a) / (abs(a) + abs(p))) * 100
+
+# =====================================================================
+# 3. Build Comparison Table
+# =====================================================================
 
 compare_tbl <- tibble(
-  model = c("RF_small", "RF_medium", "RF_large"),
+  model = c("Linear Regression", "RF Small (200k)", "RF Medium (500k)", "RF Large (1M)"),
   RMSE  = c(
-    rmse(df$actual, df$pred_small),
-    rmse(df$actual, df$pred_medium),
-    rmse(df$actual, df$pred_large)
+    rmse(eval_actual, lm_pred),
+    rmse(eval_actual, rf_small_pred),
+    rmse(eval_actual, rf_medium_pred),
+    rmse(eval_actual, rf_large_pred)
   ),
   MAE   = c(
-    mae(df$actual, df$pred_small),
-    mae(df$actual, df$pred_medium),
-    mae(df$actual, df$pred_large)
+    mae(eval_actual, lm_pred),
+    mae(eval_actual, rf_small_pred),
+    mae(eval_actual, rf_medium_pred),
+    mae(eval_actual, rf_large_pred)
   ),
   MAPE  = c(
-    mape(df$actual, df$pred_small),
-    mape(df$actual, df$pred_medium),
-    mape(df$actual, df$pred_large)
+    mape(eval_actual, lm_pred),
+    mape(eval_actual, rf_small_pred),
+    mape(eval_actual, rf_medium_pred),
+    mape(eval_actual, rf_large_pred)
   ),
   SMAPE = c(
-    smape(df$actual, df$pred_small),
-    smape(df$actual, df$pred_medium),
-    smape(df$actual, df$pred_large)
+    smape(eval_actual, lm_pred),
+    smape(eval_actual, rf_small_pred),
+    smape(eval_actual, rf_medium_pred),
+    smape(eval_actual, rf_large_pred)
   )
 )
 
-write_csv(compare_tbl, "outputs/model_comparison.csv")
+print(compare_tbl)
 
-# --------------------------------------------
-# 3. Visualizations
-# --------------------------------------------
+# =====================================================================
+# 4. Visualization: Actual vs Predicted (Best Model)
+# =====================================================================
 
-# Actual vs Predicted (best model)
-best_model <- compare_tbl %>% arrange(RMSE) %>% slice(1) %>% pull(model)
+# Identify best model by RMSE
+best_model_name <- compare_tbl$model[which.min(compare_tbl$RMSE)]
 
-df$best_pred <- dplyr::case_when(
-  best_model == "RF_small"  ~ df$pred_small,
-  best_model == "RF_medium" ~ df$pred_medium,
-  best_model == "RF_large"  ~ df$pred_large
+if (best_model_name == "Linear Regression") {
+  best_pred <- lm_pred
+} else if (best_model_name == "RF Small (200k)") {
+  best_pred <- rf_small_pred
+} else if (best_model_name == "RF Medium (500k)") {
+  best_pred <- rf_medium_pred
+} else {
+  best_pred <- rf_large_pred
+}
+
+viz_df <- tibble(
+  date = test_clean$date,
+  actual = eval_actual,
+  predicted = best_pred
 )
 
-p1 <- ggplot(df, aes(x = actual, y = best_pred)) +
-  geom_point(alpha = 0.4, color = "#2C7BB6") +
-  geom_abline(linetype = "dashed", color = "red") +
+p1 <- ggplot(viz_df, aes(x = date)) +
+  geom_line(aes(y = actual, color = "Actual")) +
+  geom_line(aes(y = predicted, color = "Predicted")) +
   labs(
-    title = paste("Actual vs Predicted —", best_model),
-    x = "Actual Sales",
-    y = "Predicted Sales"
+    title = paste("Actual vs Predicted Sales —", best_model_name),
+    x = "Date",
+    y = "Sales"
   ) +
+  scale_color_manual(values = c("Actual" = "black", "Predicted" = "blue")) +
   theme_minimal()
 
-ggsave("visuals/actual_vs_predicted.png", p1, width = 8, height = 5)
+print(p1)
 
-# Residual distribution
-df$residuals <- df$actual - df$best_pred
+# =====================================================================
+# 5. Visualization: Residual Distribution
+# =====================================================================
 
-p2 <- ggplot(df, aes(x = residuals)) +
-  geom_histogram(bins = 40, fill = "#1B9E77", alpha = 0.7) +
+viz_df$residuals <- viz_df$actual - viz_df$predicted
+
+p2 <- ggplot(viz_df, aes(x = residuals)) +
+  geom_histogram(bins = 50, fill = "steelblue", color = "white") +
   labs(
-    title = paste("Residual Distribution —", best_model),
+    title = paste("Residual Distribution —", best_model_name),
     x = "Residuals",
     y = "Count"
   ) +
   theme_minimal()
 
-ggsave("visuals/residual_distribution.png", p2, width = 8, height = 5)
+print(p2)
 
-# Time-series plot
-p3 <- ggplot(df, aes(x = date)) +
-  geom_line(aes(y = actual, color = "Actual")) +
-  geom_line(aes(y = best_pred, color = "Predicted")) +
+# =====================================================================
+# 6. Visualization: Predicted vs Actual Scatter
+# =====================================================================
+
+p3 <- ggplot(viz_df, aes(x = actual, y = predicted)) +
+  geom_point(alpha = 0.4, color = "darkgreen") +
+  geom_abline(slope = 1, intercept = 0, color = "red") +
   labs(
-    title = paste("Actual vs Predicted Over Time —", best_model),
-    x = "Date",
-    y = "Sales"
+    title = paste("Predicted vs Actual Scatter —", best_model_name),
+    x = "Actual Sales",
+    y = "Predicted Sales"
   ) +
-  scale_color_manual(values = c("Actual" = "#D95F02", "Predicted" = "#1B9E77")) +
   theme_minimal()
 
-ggsave("visuals/time_series.png", p3, width = 10, height = 5)
+print(p3)
 
-# --------------------------------------------
-# 4. Save combined output
-# --------------------------------------------
-
-saveRDS(list(
-  comparison = compare_tbl,
-  best_model = best_model
-), "outputs/model_compare_and_visualize.rds")
+# =====================================================================
+# End of Script
+# =====================================================================
