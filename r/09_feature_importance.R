@@ -1,23 +1,24 @@
-############################################################
-## Walmart Sales Forecasting Project
+# =====================================================================
+# Walmart Sales Forecasting Project
 # 09_feature_importance.R
 # Author: Waldo Ketonou | WaldoSphere Group LLC
-# Variable importance for RF_small, RF_medium, RF_large
-############################################################
+# Purpose: Extract and visualize feature importance from RF models
+# Requires: 06_model_evaluation.R and 07_model_training.R
+# =====================================================================
 
 library(dplyr)
 library(tidyr)
 library(ggplot2)
 
-############################################################
-# 1. Extract variable importance from each model
-############################################################
+# =====================================================================
+# 1. Extract Variable Importance from Each Model
+# =====================================================================
 
 get_importance <- function(model, model_name) {
   tibble(
-    feature = names(model$variable.importance),
+    feature    = names(model$variable.importance),
     importance = as.numeric(model$variable.importance),
-    model = model_name
+    model      = model_name
   )
 }
 
@@ -25,15 +26,13 @@ imp_small  <- get_importance(rf_small$model,  "RF Small (200k)")
 imp_medium <- get_importance(rf_medium$model, "RF Medium (500k)")
 imp_large  <- get_importance(rf_large$model,  "RF Large (1M)")
 
-# Combine into one table
 importance_all <- bind_rows(imp_small, imp_medium, imp_large)
 
 print(importance_all)
 
-
-############################################################
-# 2. Normalize importance values (optional but recommended)
-############################################################
+# =====================================================================
+# 2. Normalize Importance Values
+# =====================================================================
 
 importance_norm <- importance_all %>%
   group_by(model) %>%
@@ -42,10 +41,9 @@ importance_norm <- importance_all %>%
 
 print(importance_norm)
 
-
-############################################################
-# 3. Plot importance for each model separately
-############################################################
+# =====================================================================
+# 3. Plot Importance for Each Model Separately
+# =====================================================================
 
 plot_importance <- function(df, model_name) {
   ggplot(df %>% filter(model == model_name),
@@ -69,10 +67,9 @@ print(p_small)
 print(p_medium)
 print(p_large)
 
-
-############################################################
-# 4. Combined comparison plot (all models)
-############################################################
+# =====================================================================
+# 4. Combined Comparison Plot (All Models)
+# =====================================================================
 
 p_compare <- ggplot(importance_norm,
                     aes(x = feature,
@@ -89,10 +86,9 @@ p_compare <- ggplot(importance_norm,
 
 print(p_compare)
 
-
-############################################################
-# 5. Summary table for case study
-############################################################
+# =====================================================================
+# 5. Summary Table for Case Study
+# =====================================================================
 
 importance_summary <- importance_norm %>%
   group_by(feature) %>%
@@ -105,6 +101,6 @@ importance_summary <- importance_norm %>%
 
 print(importance_summary)
 
-############################################################
+# =====================================================================
 # End of Script
-############################################################
+# =====================================================================
