@@ -1,5 +1,7 @@
 # ============================================
+# Walmart Sales Forecasting Project
 # 08_model_compare_and_visualize.R
+# Author: Waldo Ketonou | WaldoSphere Group LLC
 # Model Comparison + Visualizations
 # ============================================
 
