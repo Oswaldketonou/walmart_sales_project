@@ -10,6 +10,19 @@ library(dplyr)
 library(ranger)
 
 # =====================================================================
+# 0. Load train_df and test_df created in 06_model_evaluation.R
+# =====================================================================
+
+train_df <- read.csv("outputs/prepared_data/train_df.csv")
+test_df  <- read.csv("outputs/prepared_data/test_df.csv")
+
+# Ensure complete cases for RF
+train_clean <- train_df %>% filter(complete.cases(.))
+test_clean  <- test_df  %>% filter(complete.cases(.))
+
+eval_actual <- test_clean$actual_sales
+
+# =====================================================================
 # 1. Baseline Linear Regression Model
 # =====================================================================
 
@@ -49,11 +62,6 @@ cat("SMAPE:", smape_lm, "%\n")
 # 2. Random Forest Scaling Experiments
 #    Small (200k) → Medium (500k) → Large (1M)
 # =====================================================================
-
-train_clean <- train_df %>% filter(complete.cases(.))
-test_clean  <- test_df  %>% filter(complete.cases(.))
-
-eval_actual <- test_clean$actual_sales
 
 train_rf_model <- function(sample_size, num_trees = 200) {
 
