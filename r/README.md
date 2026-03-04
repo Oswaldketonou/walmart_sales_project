@@ -1,75 +1,143 @@
-# 📁 R Modeling & Evaluation Scripts
+# 📁 R Modeling & Evaluation Scripts  
+This folder contains all R scripts used for modeling, evaluation, visualization, feature importance analysis, and scenario simulation in the **Walmart Sales Forecasting Project**. These scripts operate on the modeling dataset created in PostgreSQL (`modeling_clean`) and represent the full machine‑learning workflow performed outside the database.
 
-This folder contains all R scripts used for modeling, evaluation, and visualization in the Walmart Sales Forecasting project. These scripts operate on the modeling dataset generated in PostgreSQL (`modeling_clean`) and represent the full machine‑learning workflow performed outside the database.
-
-The SQL pipeline ends with the creation of the modeling dataset. All statistical modeling, predictions, metrics, and visualizations are performed in R.
-
----
-
-## 📄 File Overview
-
-### **06_model_evaluation.R**
-Evaluates the baseline forecasting model using:
-- Linear regression (`lm`)
-- Predictions on the test set
-- Custom error metrics:
-  - RMSE  
-  - MAE  
-  - MAPE  
-  - SMAPE  
-- Handling NA predictions
-- Comparing actual vs predicted values
-- Preparing evaluation tables for the case study
-
-This script reflects the exact evaluation workflow used during model development.
+The SQL pipeline ends with the creation of the modeling dataset.  
+All statistical modeling, predictions, metrics, visualizations, and simulations are performed in R.
 
 ---
 
-### **07_model_training.R**
-Trains the final model using the cleaned modeling dataset. Includes:
-- Model specification
-- Training on the full training set
-- Saving the model object
-- Exporting predictions for dashboarding or reporting
+## 📄 Script Overview
 
-This script isolates the training logic from evaluation for clarity and reproducibility.
+### **06_model_evaluation.R**  
+Connects to PostgreSQL, loads the `modeling_clean` table, prepares the modeling dataset, and performs a **time‑based train/test split**.
 
----
+Key steps:
+- Load cleaned modeling dataset from PostgreSQL  
+- Convert categorical variables  
+- Rename `weekly_sales` → `actual_sales`  
+- Split data into:
+  - **Train:** all years before 2012  
+  - **Test:** year 2012  
+- Produce `train_df` and `test_df` for downstream scripts  
 
-### **08_visualizations.R**
-Generates visual outputs for the case study and dashboard:
-- Time‑series plots
-- Actual vs predicted charts
-- Error distribution plots
-- Store and department trend visuals
-
-All plots are saved to the `/visuals` folder.
+This script is the **foundation** of the modeling workflow.
 
 ---
 
-### **utils_metrics.R**
-Contains reusable custom metric functions:
-- `rmse()`
-- `mae()`
-- `mape()`
-- `smape()`
+### **07_model_training.R**  
+Trains the baseline and Random Forest models using the prepared datasets.
 
-These functions keep the evaluation scripts clean and modular.
+Models trained:
+- **Linear Regression** (baseline)  
+- **Random Forest scaling experiments**:
+  - RF Small (200k rows)  
+  - RF Medium (500k rows)  
+  - RF Large (1M rows — final model)  
+
+All RF models use:
+- `num.trees = 200`  
+- `num.threads = 1`  
+- `importance = "impurity"`  
+
+Outputs:
+- `lm_model`  
+- `rf_small`, `rf_medium`, `rf_large`  
+- Evaluation metrics printed to console  
+
+---
+
+### **08_model_compare_and_visualize.R**  
+Compares all trained models and generates evaluation visualizations.
+
+Includes:
+- RMSE, MAE, MAPE, SMAPE for each model  
+- Comparison table  
+- Best model selection  
+- Visualizations:
+  - Actual vs Predicted  
+  - Residual distribution  
+  - Predicted vs Actual scatter  
+
+These visuals support the case study and Power BI dashboard.
+
+---
+
+### **09_feature_importance.R**  
+Extracts and visualizes feature importance from all Random Forest models.
+
+Outputs:
+- Normalized feature importance for:
+  - RF Small  
+  - RF Medium  
+  - RF Large  
+- Individual importance plots  
+- Combined comparison plot  
+- Summary table for case study  
+
+This script supports interpretability and business storytelling.
+
+---
+
+### **10_simulation_scenarios.R**  
+Runs business‑focused scenario simulations using the **final RF model (1M rows)**.
+
+Scenarios:
+- Fuel price +10%  
+- CPI –10%  
+- Temperature +5°F  
+- Holiday promotion boost  
+- Combined shock  
+
+Outputs:
+- Predicted sales under each scenario  
+- Delta vs baseline  
+- Percentage change  
+- Summary table for dashboard  
+
+This script demonstrates how forecasting models support **strategic decision‑making**.
+
+---
+
+### **utils_metrics.R**  
+Reusable custom metric functions:
+- `rmse()`  
+- `mae()`  
+- `mape()`  
+- `smape()`  
+
+These functions keep evaluation scripts clean and modular.
 
 ---
 
 ## 🔗 Workflow Summary
 
-1. **PostgreSQL**
-   - Clean data  
-   - Engineer features  
-   - Build modeling dataset (`modeling_clean`)
+### **1. PostgreSQL (SQL folder)**
+- Clean raw data  
+- Engineer features  
+- Build final modeling dataset (`modeling_clean`)  
 
-2. **R (this folder)**
-   - Load modeling dataset  
-   - Train model  
-   - Generate predictions  
-   - Evaluate performance  
-   - Produce visualizations  
+### **2. R (this folder)**
+- Load modeling dataset  
+- Train models  
+- Compare performance  
+- Visualize results  
+- Extract feature importance  
+- Run scenario simulations  
 
 This separation mirrors real analytics engineering practices and keeps the project organized and easy to navigate.
+
+---
+
+## 🛠️ Tools & Technologies
+- **PostgreSQL** — Data engineering  
+- **R (dplyr, ranger, ggplot2)** — Modeling & visualization  
+- **Power BI** — Dashboard & business insights  
+- **GitHub** — Version control & portfolio hosting  
+
+---
+
+## 📌 Author  
+**Waldo Ketonou**  
+WaldoSphere Group LLC  
+Springfield, MO  
+
