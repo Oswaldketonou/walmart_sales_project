@@ -1,5 +1,7 @@
 # ===============================
-# utils_metrics.R
+# Walmart Sales Forecasting Project
+# # utils_metrics.R
+# Author: Waldo Ketonou | WaldoSphere Group LLC
 # Custom Error Metric Functions
 # ===============================
 
