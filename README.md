@@ -121,26 +121,6 @@ This demonstrates how forecasting models support **strategic decision‑making**
 ---
 
 ## 📁 Repository Structure  
-walmart_sales_project/
-│
-├── sql/
-│   ├── 01_cleaning.sql
-│   ├── 02_feature_engineering.sql
-│   └── 03_modeling_clean.sql
-│
-├── r/
-│   ├── 06_model_evaluation.R
-│   ├── 07_model_training.R
-│   ├── 08_model_compare_and_visualize.R
-│   ├── 09_feature_importance.R
-│   └── 10_simulation_scenarios.R
-│
-├── outputs/
-│   ├── predictions/
-│   ├── visuals/
-│   └── scenario_results/
-│
-└── README.md
 
 ---
 
