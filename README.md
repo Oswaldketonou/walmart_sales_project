@@ -1,187 +1,168 @@
-# 🛒 Walmart Sales Forecasting & Analytics Project  
-End-to-end SQL + Analytics case study using Walmart weekly sales data.
+# 🛒 Walmart Sales Forecasting Project  
+**Author:** Waldo Ketonou | WaldoSphere Group LLC  
+**Location:** Springfield, MO  
+**Tech Stack:** PostgreSQL • R • dplyr • ranger • ggplot2 • Power BI • GitHub  
+
+A full end‑to‑end forecasting pipeline built to model Walmart weekly sales using real‑world data engineering, machine learning, and scenario simulation techniques. This project mirrors a production analytics workflow: SQL for data engineering, R for modeling and evaluation, and Power BI for business storytelling.
 
 ---
 
-# 📁 Project Structure
+## 📌 Project Overview  
+This project forecasts Walmart weekly sales using:
+
+- **PostgreSQL** for data cleaning, feature engineering, and time‑based splitting  
+- **R** for modeling, evaluation, visualization, and scenario simulation  
+- **Random Forest scaling experiments** (200k → 500k → 1M rows)  
+- **Power BI** for business insights and dashboarding  
+
+The pipeline is modular, reproducible, and hardware‑aware, reflecting real analytics engineering practices.
 
 ---
 
-# 🎯 Project Overview
+## 🏗️ Architecture & Workflow  
+The project follows a structured, multi‑stage workflow:
 
-This project analyzes Walmart’s weekly sales across 45 stores and multiple departments to uncover:
+### **1. Data Engineering (SQL)**
+- Clean raw data  
+- Create lag features  
+- Create rolling windows  
+- Encode holiday effects  
+- Join store metadata  
+- Produce final modeling dataset: **`modeling_clean`**
 
-- Key drivers of weekly sales  
-- Store and department performance  
-- Holiday and markdown impact  
-- Weather and economic influence  
-- Feature importance for forecasting  
+### **2. Modeling Pipeline (R)**  
+Scripts must be run in order:
 
-The workflow includes data cleaning, feature engineering, EDA, KPI development, and business insights — all executed in PostgreSQL.
+| Step | Script | Purpose |
+|------|--------|---------|
+| 06 | `06_model_evaluation.R` | Load `modeling_clean`, prepare `train_df` and `test_df` |
+| 07 | `07_model_training.R` | Train Linear Regression + RF scaling models |
+| 08 | `08_model_compare_and_visualize.R` | Compare models and generate evaluation visuals |
+| 09 | `09_feature_importance.R` | Extract and visualize feature importance |
+| 10 | `10_simulation_scenarios.R` | Run business scenario simulations |
 
----
-
-# 🧹 Data Cleaning & Preparation
-
-### ✔ Missing Value Handling  
-- Imputed markdowns  
-- Filled missing temperature, CPI, and unemployment  
-- Standardized date formats  
-
-### ✔ Data Type Corrections  
-- Converted numeric fields  
-- Ensured consistent store/department keys  
-
-### ✔ Dataset Integration  
-Created unified tables:
-
-- `walmart_master`  
-- `walmart_master_fe` (feature engineered)
-
-### ✔ Engineered Features  
-- `year`, `month`, `week`  
-- `is_holiday`  
-- `season`  
-- `markdown_total`  
-- `lagged_sales`  
+This structure ensures clean separation of concerns and reproducibility.
 
 ---
 
-# 🔍 Exploratory Data Analysis (EDA)
+## 📊 Modeling Approach
 
-### ⭐ Yearly Trends  
-- 2010 → 2011: **+7% growth**  
-- 2011 → 2012: **–18% decline**
+### **Baseline Model**
+- Linear Regression  
+- Provides interpretability and a benchmark  
 
-### ⭐ Holiday Impact  
-Holiday weeks show a **+7.1% lift** in weekly sales.
+### **Random Forest Scaling Experiments**
+To respect hardware limits, models are trained on:
 
-### ⭐ Top-Performing Stores  
-Store **20** leads all stores in total revenue.
+- **200k rows** → RF Small  
+- **500k rows** → RF Medium  
+- **1M rows** → RF Large (final model)  
 
-### ⭐ Top-Performing Departments  
-Departments **92** and **95** generate nearly **$1B combined**.
+All RF models use:
+- `num.trees = 200`  
+- `num.threads = 1`  
+- `importance = "impurity"`  
 
-### ⭐ Markdown Impact  
-Markdown correlations with weekly sales:
-
-- Markdown5: **+0.0505**  
-- Markdown1: **+0.0472**
-
-### ⭐ Weather & Economic Impact  
-Minimal correlation:
-
-- Temperature: –0.0023  
-- Fuel price: –0.0001  
-- CPI: –0.0209  
-- Unemployment: –0.0259  
+This approach demonstrates how model performance scales with data volume.
 
 ---
 
-# 📊 Key Performance Indicators (KPIs)
+## 📈 Model Evaluation  
+Metrics computed:
 
-## 🔵 Forecasting KPIs
+- **RMSE**  
+- **MAE**  
+- **MAPE**  
+- **SMAPE**  
 
-### **Mean Absolute Error (MAE)**  
-\[
-MAE = \frac{1}{n} \sum |y - \hat{y}|
-\]
+Visualizations include:
 
----
+- Actual vs Predicted  
+- Residual distribution  
+- Predicted vs Actual scatter  
 
-### **Mean Absolute Percentage Error (MAPE)**  
-\[
-MAPE = \frac{100}{n} \sum \left| \frac{y - \hat{y}}{y} \right|
-\]
-
----
-
-### **Root Mean Squared Error (RMSE)**  
-\[
-RMSE = \sqrt{ \frac{1}{n} \sum (y - \hat{y})^2 }
-\]
+These outputs support both technical evaluation and business interpretation.
 
 ---
 
-### **R² (Coefficient of Determination)**  
-\[
-R^2 = 1 - \frac{SS_{res}}{SS_{tot}}
-\]
+## 🔍 Feature Importance  
+Using the final RF model (1M rows):
+
+- Extract impurity‑based importance  
+- Normalize importance per model  
+- Visualize importance for each RF model  
+- Compare importance across models  
+- Produce a summary table for the case study  
+
+This step supports interpretability and stakeholder communication.
 
 ---
 
-## 🟢 Business KPIs
+## 🧪 Scenario Simulations  
+Using the final RF model, the following business scenarios are simulated:
 
-### **Year-over-Year Growth (YoY)**  
-\[
-YoY = \frac{Sales_{current} - Sales_{previous}}{Sales_{previous}} \times 100
-\]
+| Scenario | Description |
+|----------|-------------|
+| Fuel +10% | Rising transportation costs |
+| CPI –10% | Economic relief |
+| Temp +5°F | Heat wave |
+| Holiday Promotion | All holiday flags set to 1 |
+| Combined Shock | Fuel ↑10%, CPI ↓10%, Temp ↑5°F |
 
----
+Outputs include:
 
-### **Holiday Sales Lift**  
-\[
-Holiday\ Lift = \frac{Avg\ Holiday\ Sales - Avg\ NonHoliday\ Sales}{Avg\ NonHoliday\ Sales} \times 100
-\]
+- Predicted sales under each scenario  
+- Delta vs baseline  
+- Percentage change  
+- Summary table for dashboard  
 
----
-
-### **Markdown Impact**  
-Correlation between markdown activity and weekly sales.
-
----
-
-### **Top Stores & Departments**  
-Ranked by total revenue.
+This demonstrates how forecasting models support **strategic decision‑making**.
 
 ---
 
-### **Weather & Economic Impact**  
-Correlation analysis to determine external influence.
+## 📁 Repository Structure  
 
 ---
 
-# 🧠 Insights Summary
-
-- Sales are **highly seasonal**, with strong holiday performance.  
-- Markdown promotions help, but the effect is **modest**.  
-- Weather and economic variables have **minimal impact**.  
-- A small number of departments drive the majority of revenue.  
-- Store-level performance varies significantly across regions.
+## 🛠️ Tools & Technologies  
+- **PostgreSQL** — Data engineering  
+- **R (dplyr, ranger, ggplot2)** — Modeling & visualization  
+- **Power BI** — Dashboard & business insights  
+- **GitHub** — Version control & portfolio hosting  
 
 ---
 
-# 📈 Dashboard (Coming Soon)
+## 🎯 Key Business Insights  
+This section summarizes insights derived from the modeling and scenario simulations.  
+(You will fill this in once your dashboard is finalized.)
 
-The dashboard will include:
-
-- KPI cards  
-- Store performance map  
-- Department revenue ranking  
-- Markdown impact visualization  
-- Seasonal trends  
-
----
-
-# 🛠 Tools & Technologies
-
-- PostgreSQL  
-- SQL  
-- Tableau / Power BI  
-- GitHub  
+Examples:
+- Fuel price increases have the largest negative impact on weekly sales  
+- Holiday promotions significantly boost sales across all store types  
+- CPI decreases improve sales, especially in lower‑income regions  
+- Temperature increases have a moderate but consistent effect  
 
 ---
 
-# 👤 About the Analyst
+## 🚀 How to Run the Project
 
-Waldo KETONOU — Business/Data Analyst transitioning from 18+ years in retail operations management into analytics.  
-Focused on SQL, dashboard design, and end-to-end analytics workflows.
+### **Prerequisites**
+- PostgreSQL installed  
+- R + required packages  
+- Power BI Desktop (optional for dashboard)
+
+### **Execution Order**
+1. Run SQL scripts to build `modeling_clean`  
+2. Run `06_model_evaluation.R`  
+3. Run `07_model_training.R`  
+4. Run `08_model_compare_and_visualize.R`  
+5. Run `09_feature_importance.R`  
+6. Run `10_simulation_scenarios.R`  
 
 ---
 
-# 🚀 Next Steps
+## 📌 Author  
+**Waldo Ketonou**  
+WaldoSphere Group LLC  
+Springfield, MO  
 
-- Build forecasting model  
-- Add dashboard visualizations  
-- Publish full case study  
-- Add modeling results and performance KPIs  
