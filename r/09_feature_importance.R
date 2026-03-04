@@ -11,10 +11,23 @@ library(tidyr)
 library(ggplot2)
 
 # =====================================================================
+# 0. Load trained Random Forest models
+# =====================================================================
+
+rf_small  <- readRDS("outputs/models/rf_small.rds")
+rf_medium <- readRDS("outputs/models/rf_medium.rds")
+rf_large  <- readRDS("outputs/models/rf_large.rds")
+
+# =====================================================================
 # 1. Extract Variable Importance from Each Model
 # =====================================================================
 
 get_importance <- function(model, model_name) {
+
+  if (is.null(model$variable.importance)) {
+    stop(paste("Variable importance not found for model:", model_name))
+  }
+
   tibble(
     feature    = names(model$variable.importance),
     importance = as.numeric(model$variable.importance),
@@ -22,9 +35,9 @@ get_importance <- function(model, model_name) {
   )
 }
 
-imp_small  <- get_importance(rf_small$model,  "RF Small (200k)")
-imp_medium <- get_importance(rf_medium$model, "RF Medium (500k)")
-imp_large  <- get_importance(rf_large$model,  "RF Large (1M)")
+imp_small  <- get_importance(rf_small,  "RF Small (200k)")
+imp_medium <- get_importance(rf_medium, "RF Medium (500k)")
+imp_large  <- get_importance(rf_large,  "RF Large (1M)")
 
 importance_all <- bind_rows(imp_small, imp_medium, imp_large)
 
@@ -91,13 +104,9 @@ print(p_compare)
 # =====================================================================
 
 importance_summary <- importance_norm %>%
-  group_by(feature) %>%
-  summarize(
-    small  = norm_importance[model == "RF Small (200k)"],
-    medium = norm_importance[model == "RF Medium (500k)"],
-    large  = norm_importance[model == "RF Large (1M)"]
-  ) %>%
-  arrange(desc(large))
+  select(feature, model, norm_importance) %>%
+  pivot_wider(names_from = model, values_from = norm_importance) %>%
+  arrange(desc(`RF Large (1M)`))
 
 print(importance_summary)
 
