@@ -3,6 +3,7 @@
 # 07_model_training.R
 # Author: Waldo Ketonou | WaldoSphere Group LLC
 # Purpose: Train baseline linear model + RF scaling experiments
+# Requires: 06_model_evaluation.R to be run first
 # =====================================================================
 
 library(dplyr)
