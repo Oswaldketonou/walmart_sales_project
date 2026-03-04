@@ -2,7 +2,7 @@
 # Walmart Sales Forecasting Project
 # 06_model_evaluation.R
 # Author: Waldo Ketonou | WaldoSphere Group LLC
-# Purpose: Connect to PostgreSQL, load modeling_clean, evaluate model
+# Purpose: Load modeling_clean (CSV-first), evaluate model
 # =====================================================================
 
 # -----------------------------
@@ -12,26 +12,38 @@ library(DBI)
 library(RPostgres)
 library(dplyr)
 
-# -----------------------------
-# Connect to PostgreSQL
-# -----------------------------
-con <- dbConnect(
-  RPostgres::Postgres(),
-  dbname   = "postgres",
-  host     = "localhost",
-  port     = 5432,
-  user     = "postgres",
-  password = "mypasswordtopostegresql"
-)
-
 ###############################################
 # Time‑based train/test split for modeling
 ###############################################
 
 #---------------------------------------------
-# 1. Load modeling_clean table
+# 1. Load modeling_clean table (CSV-first)
 #---------------------------------------------
-model_df <- dbReadTable(con, "modeling_clean")
+csv_path <- "data/cleaned/modeling_clean.csv"
+
+if (file.exists(csv_path)) {
+
+  message("✔ Loading modeling_clean from CSV...")
+  model_df <- read.csv(csv_path)
+
+} else {
+
+  message("⚠ CSV not found. Connecting to PostgreSQL...")
+
+  con <- dbConnect(
+    RPostgres::Postgres(),
+    dbname   = "walmart_sales",
+    host     = "localhost",
+    port     = 5432,
+    user     = "postgres",
+    password = "mypostegresqlpassword"
+  )
+
+  model_df <- dbReadTable(con, "modeling_clean")
+  dbDisconnect(con)
+
+  message("✔ Loaded modeling_clean from PostgreSQL.")
+}
 
 # Quick uniqueness check
 sapply(model_df, function(x) length(unique(x)))
