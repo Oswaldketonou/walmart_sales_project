@@ -9,14 +9,11 @@
 library(dplyr)
 
 # =====================================================================
-# 1. Load Final Model
+# 1. Load Final Model + Test Data
 # =====================================================================
 
-# If saved externally:
-# final_model <- readRDS("models/final_rf_model.rds")
-
-# If running in the same R session:
-final_model <- rf_large$model
+final_model <- readRDS("outputs/models/rf_large.rds")
+test_df     <- read.csv("outputs/prepared_data/test_df.csv")
 
 # =====================================================================
 # 2. Prepare Clean Test Data for Simulation
@@ -31,28 +28,24 @@ test_sim$baseline_pred <- baseline_pred
 # 3. Define Simulation Scenarios
 # =====================================================================
 
-# Scenario A: +10% fuel price increase
 scenario_A <- test_sim %>%
   mutate(fuel_price = fuel_price * 1.10)
 
-# Scenario B: -10% CPI decrease (economic relief)
 scenario_B <- test_sim %>%
   mutate(cpi = cpi * 0.90)
 
-# Scenario C: +5°F temperature increase (heat wave)
 scenario_C <- test_sim %>%
   mutate(temperature = temperature + 5)
 
-# Scenario D: Holiday promotion boost (set all holiday flags to 1)
 scenario_D <- test_sim %>%
-  mutate(feature_is_holiday = factor(1, levels = levels(test_sim$feature_is_holiday)))
+  mutate(feature_is_holiday = factor("1", levels = levels(test_sim$feature_is_holiday)))
 
-# Scenario E: Combined shock (fuel ↑10%, CPI ↓10%, temp ↑5°F)
 scenario_E <- test_sim %>%
   mutate(
-    fuel_price  = fuel_price * 1.10,
-    cpi         = cpi * 0.90,
-    temperature = temperature + 5
+    fuel_price         = fuel_price * 1.10,
+    cpi                = cpi * 0.90,
+    temperature        = temperature + 5,
+    feature_is_holiday = factor("1", levels = levels(test_sim$feature_is_holiday))
   )
 
 # =====================================================================
@@ -111,13 +104,6 @@ scenario_summary <- tibble(
 )
 
 print(scenario_summary)
-
-# =====================================================================
-# 7. Optional: Export Scenario Results for Dashboard
-# =====================================================================
-
-# write.csv(test_sim, "outputs/scenario_predictions.csv", row.names = FALSE)
-# write.csv(scenario_summary, "outputs/scenario_summary.csv", row.names = FALSE)
 
 # =====================================================================
 # End of Script
