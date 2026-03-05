@@ -23,24 +23,29 @@ All data preparation and modeling must be completed before running this notebook
 ```{r}
 library(dplyr)
 library(ggplot2)
+library(tible)
+```
 # Load Prepareed Objects
 This notebook assumes the following objects already exist in the environment:( test_df , test_clean, lm_model, rf_small, rf_medium, rf_large)
 if running standalone, load them from RDS or source the previous scripts
 ```{r}
 test_clean <- test_df %>% filter(complete.cases(.))
 eval_actual <- test_clean$actual_sales
+```
 # Generate Predictions
 ```{r}
 lm_pred        <- predict(lm_model, newdata = test_clean)
 rf_small_pred  <- predict(rf_small$model,  data = test_clean)$predictions
 rf_medium_pred <- predict(rf_medium$model, data = test_clean)$predictions
 rf_large_pred  <- predict(rf_large$model,  data = test_clean)$predictions
+```
 # Define Evaluation Metrics
 ```{r}
 rmse  <- function(a, p) sqrt(mean((p - a)^2))
 mae   <- function(a, p) mean(abs(p - a))
 mape  <- function(a, p) mean(abs((p - a) / a)) * 100
 smape <- function(a, p) mean(2 * abs(p - a) / (abs(a) + abs(p))) * 100
+```
 # Build Comparison Table
 ```{r}
 compare_tbl <- tibble(
@@ -72,6 +77,7 @@ compare_tbl <- tibble(
 )
 
 compare_tbl
+```
 # Identify Best Model
 ```{r}
 best_model_name <- compare_tbl$model[which.min(compare_tbl$RMSE)]
@@ -91,6 +97,7 @@ viz_df <- tibble(
   actual = eval_actual,
   predicted = best_pred
 )
+```
 # Actual vs Predicted Plot
 ```{r}
 ggplot(viz_df, aes(x = date)) +
@@ -103,6 +110,7 @@ ggplot(viz_df, aes(x = date)) +
   ) +
   scale_color_manual(values = c("Actual" = "black", "Predicted" = "blue")) +
   theme_minimal()
+```
 # Residual Distribution
 ```{r}
 viz_df$residuals <- viz_df$actual - viz_df$predicted
@@ -115,6 +123,7 @@ ggplot(viz_df, aes(x = residuals)) +
     y = "Count"
   ) +
   theme_minimal()
+```
 # Predicted vs Actual Scatter
 ```{r}
 ggplot(viz_df, aes(x = actual, y = predicted)) +
@@ -126,3 +135,4 @@ ggplot(viz_df, aes(x = actual, y = predicted)) +
     y = "Predicted Sales"
   ) +
   theme_minimal()
+```
