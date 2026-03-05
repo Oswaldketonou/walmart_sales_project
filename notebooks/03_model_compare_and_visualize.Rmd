@@ -1,0 +1,128 @@
+---
+title: "03 — Model Comparison & Visualization"
+author: "Waldo Ketonou"
+output: html_document
+---
+
+# Introduction
+This notebook compares the performance of all trained models from the Walmart Sales Forecasting Project. The models were trained in the previous step (Notebook 02 / Script 07), and this notebook evaluates:
+
+- Linear Regression  
+- Random Forest (Small: 200k rows)  
+- Random Forest (Medium: 500k rows)  
+- Random Forest (Large: 1M rows)  
+
+It generates a comparison table and three key visualizations:
+- Actual vs Predicted (best model)
+- Residual distribution
+- Predicted vs Actual scatter
+
+All data preparation and modeling must be completed before running this notebook.
+
+# Load Libraries
+```{r}
+library(dplyr)
+library(ggplot2)
+# Load Prepareed Objects
+This notebook assumes the following objects already exist in the environment:( test_df , test_clean, lm_model, rf_small, rf_medium, rf_large)
+if running standalone, load them from RDS or source the previous scripts
+```{r}
+test_clean <- test_df %>% filter(complete.cases(.))
+eval_actual <- test_clean$actual_sales
+# Generate Predictions
+```{r}
+lm_pred        <- predict(lm_model, newdata = test_clean)
+rf_small_pred  <- predict(rf_small$model,  data = test_clean)$predictions
+rf_medium_pred <- predict(rf_medium$model, data = test_clean)$predictions
+rf_large_pred  <- predict(rf_large$model,  data = test_clean)$predictions
+# Define Evaluation Metrics
+```{r}
+rmse  <- function(a, p) sqrt(mean((p - a)^2))
+mae   <- function(a, p) mean(abs(p - a))
+mape  <- function(a, p) mean(abs((p - a) / a)) * 100
+smape <- function(a, p) mean(2 * abs(p - a) / (abs(a) + abs(p))) * 100
+# Build Comparison Table
+```{r}
+compare_tbl <- tibble(
+  model = c("Linear Regression", "RF Small (200k)", "RF Medium (500k)", "RF Large (1M)"),
+  RMSE  = c(
+    rmse(eval_actual, lm_pred),
+    rmse(eval_actual, rf_small_pred),
+    rmse(eval_actual, rf_medium_pred),
+    rmse(eval_actual, rf_large_pred)
+  ),
+  MAE   = c(
+    mae(eval_actual, lm_pred),
+    mae(eval_actual, rf_small_pred),
+    mae(eval_actual, rf_medium_pred),
+    mae(eval_actual, rf_large_pred)
+  ),
+  MAPE  = c(
+    mape(eval_actual, lm_pred),
+    mape(eval_actual, rf_small_pred),
+    mape(eval_actual, rf_medium_pred),
+    mape(eval_actual, rf_large_pred)
+  ),
+  SMAPE = c(
+    smape(eval_actual, lm_pred),
+    smape(eval_actual, rf_small_pred),
+    smape(eval_actual, rf_medium_pred),
+    smape(eval_actual, rf_large_pred)
+  )
+)
+
+compare_tbl
+# Identify Best Model
+```{r}
+best_model_name <- compare_tbl$model[which.min(compare_tbl$RMSE)]
+
+if (best_model_name == "Linear Regression") {
+  best_pred <- lm_pred
+} else if (best_model_name == "RF Small (200k)") {
+  best_pred <- rf_small_pred
+} else if (best_model_name == "RF Medium (500k)") {
+  best_pred <- rf_medium_pred
+} else {
+  best_pred <- rf_large_pred
+}
+
+viz_df <- tibble(
+  date = test_clean$date,
+  actual = eval_actual,
+  predicted = best_pred
+)
+# Actual vs Predicted Plot
+```{r}
+ggplot(viz_df, aes(x = date)) +
+  geom_line(aes(y = actual, color = "Actual")) +
+  geom_line(aes(y = predicted, color = "Predicted")) +
+  labs(
+    title = paste("Actual vs Predicted Sales —", best_model_name),
+    x = "Date",
+    y = "Sales"
+  ) +
+  scale_color_manual(values = c("Actual" = "black", "Predicted" = "blue")) +
+  theme_minimal()
+# Residual Distribution
+```{r}
+viz_df$residuals <- viz_df$actual - viz_df$predicted
+
+ggplot(viz_df, aes(x = residuals)) +
+  geom_histogram(bins = 50, fill = "steelblue", color = "white") +
+  labs(
+    title = paste("Residual Distribution —", best_model_name),
+    x = "Residuals",
+    y = "Count"
+  ) +
+  theme_minimal()
+# Predicted vs Actual Scatter
+```{r}
+ggplot(viz_df, aes(x = actual, y = predicted)) +
+  geom_point(alpha = 0.4, color = "darkgreen") +
+  geom_abline(slope = 1, intercept = 0, color = "red") +
+  labs(
+    title = paste("Predicted vs Actual Scatter —", best_model_name),
+    x = "Actual Sales",
+    y = "Predicted Sales"
+  ) +
+  theme_minimal()
