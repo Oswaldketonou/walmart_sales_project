@@ -426,3 +426,10 @@ SELECT
     ) * 100, 2) AS smape
 FROM model_output;
 
+/* ============================================================
+   FINAL BUSINESS RECOMMENDATIONS
+   ------------------------------------------------------------
+   Full recommendations are documented in README.md and the
+   Power BI dashboard summary. Insights in this notebook form
+   the analytical basis for those recommendations.
+   ============================================================ */
