@@ -13,6 +13,7 @@ library(DBI)
 library(RPostgres)
 library(dplyr)
 library(lubridate)
+```
 # Connect to PostgreSQL
 ```{r}
 con <- dbConnect(
@@ -23,14 +24,17 @@ con <- dbConnect(
   user     = "postgres",
   password = "mypasswordtopostegresql"
 )
+```
 # Load modeling_clean
 ```{r}
 df <- dbReadTable(con, "modeling_clean")
 glimpse(df)
+```
 # Basic Modeling Checks
 ```{r}
 summary(df)
 sapply(df, function(x) length(unique(x)))
+```
 # Prepare Variable
 ```{r}
    df <- df %>%
@@ -41,6 +45,7 @@ sapply(df, function(x) length(unique(x)))
   )
 
 names(df)[names(df) == "weekly_sales"] <- "actual_sales"
+```
 # Time-Based Train/Test Split
 ```{r}
 train_df <- df %>% filter(year < 2012)
@@ -48,11 +53,13 @@ test_df  <- df %>% filter(year == 2012)
 
 range(train_df$date)
 range(test_df$date)
+```
 # Save Local Copy for Modeling
 ```{r}
 dir.create("data", showWarnings = FALSE)
 dir.create("data/cleaned", showWarnings = FALSE)
 
 write.csv(df, "data/cleaned/modeling_clean.csv", row.names = FALSE)
+```
 
  
