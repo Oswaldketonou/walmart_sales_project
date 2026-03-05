@@ -142,6 +142,29 @@ Examples:
 - CPI decreases improve sales, especially in lower‑income regions  
 - Temperature increases have a moderate but consistent effect  
 
+## 🧭 Final Business Recommendations
+
+### 1. Strengthen Inventory and Staffing Around Seasonal Peaks
+Sales rise steadily from late Q1 through mid‑summer and surge again in December. Increasing inventory buffers, optimizing replenishment cycles, and adjusting staffing levels during these periods will reduce stockouts and improve customer experience.
+
+### 2. Prioritize High‑Revenue Departments in Forecasting and Operations
+A small number of departments generate most of Walmart’s revenue. These categories should receive more granular forecasting, targeted promotions, and tighter inventory controls to maximize ROI and reduce lost sales opportunities.
+
+### 3. Expand Holiday‑Focused Promotions and Preparedness
+Holiday weeks consistently produce the strongest sales spikes. Walmart should intensify promotional activity, expand holiday‑specific assortments, and position inventory earlier to fully capture these high‑margin periods.
+
+### 4. Deploy Markdown Strategies More Strategically
+Markdown weeks show higher average sales, especially in price‑sensitive categories. Walmart should time markdowns around seasonal transitions and inventory clearance windows to stimulate demand without unnecessary margin loss.
+
+### 5. Adjust Pricing and Promotions Based on Economic Conditions
+Fuel prices, CPI, and unemployment show meaningful correlations with sales. Walmart should incorporate these indicators into pricing and promotional strategies to maintain customer traffic during periods of economic pressure.
+
+### 6. Improve Forecast Accuracy for Extreme Demand Weeks
+The model underpredicts holiday spikes and overpredicts low‑demand weeks. Enhancing features related to holidays, markdown intensity, and store‑level effects will improve accuracy where it matters most for operations.
+
+### 7. Use Scenario Simulations for Strategic Planning
+Scenario testing (fuel +10%, CPI –10%, temperature shifts, holiday promotions, combined shocks) shows how external conditions impact sales. Walmart can use these simulations to plan for economic shifts, optimize pricing, and prepare for market disruptions.
+
 ---
 
 ## 🚀 How to Run the Project
