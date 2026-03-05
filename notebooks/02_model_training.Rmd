@@ -16,6 +16,7 @@ Performance is evaluated using RMSE, MAE, MAPE, and SMAPE.
 ```{r}
 library(dplyr)
 library(ranger)
+```
 # Load Prepared Train/Test Data
 ```{r}
 train_df <- read.csv("outputs/prepared_data/train_df.csv")
@@ -25,6 +26,7 @@ train_clean <- train_df %>% filter(complete.cases(.))
 test_clean  <- test_df  %>% filter(complete.cases(.))
 
 eval_actual <- test_clean$actual_sales
+```
 # Baseline Linear Regression Mosel
 ```{r}
 lm_model <- lm(
@@ -57,6 +59,7 @@ cat("RMSE :", rmse_lm, "\n")
 cat("MAE  :", mae_lm, "\n")
 cat("MAPE :", mape_lm, "%\n")
 cat("SMAPE:", smape_lm, "%\n")
+```
 # Randome Forest Scaling Experiments
 ```{r}
 train_rf_model <- function(sample_size, num_trees = 200) {
@@ -89,6 +92,7 @@ train_rf_model <- function(sample_size, num_trees = 200) {
     smape = smape_val
   )
 }
+```
 # Random Forest- Small(200k Rows)
 ```{r}
 cat("\n===== Random Forest: SMALL (200k rows) =====\n")
@@ -98,6 +102,7 @@ cat("RMSE :", rf_small$rmse, "\n")
 cat("MAE  :", rf_small$mae, "\n")
 cat("MAPE :", rf_small$mape, "%\n")
 cat("SMAPE:", rf_small$smape, "%\n")
+```
 # Random Forest - Medium (500k Rows)
 ```(r}
 cat("\n===== Random Forest: MEDIUM (500k rows) =====\n")
@@ -115,3 +120,4 @@ cat("RMSE :", rf_large$rmse, "\n")
 cat("MAE  :", rf_large$mae, "\n")
 cat("MAPE :", rf_large$mape, "%\n")
 cat("SMAPE:", rf_large$smape, "%\n")
+```
