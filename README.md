@@ -165,6 +165,14 @@ The model underpredicts holiday spikes and overpredicts low‑demand weeks. Enha
 ### 7. Use Scenario Simulations for Strategic Planning
 Scenario testing (fuel +10%, CPI –10%, temperature shifts, holiday promotions, combined shocks) shows how external conditions impact sales. Walmart can use these simulations to plan for economic shifts, optimize pricing, and prepare for market disruptions.
 
+## 🧾 Executive Summary
+
+This project delivers a full end‑to‑end forecasting pipeline designed to model Walmart’s weekly sales using production‑grade analytics practices. The workflow integrates PostgreSQL for data engineering, R for modeling and scenario simulation, and Power BI for business storytelling. The final model—built through linear regression and scaled Random Forest experiments up to 1M rows—captures long‑term trends, seasonal patterns, holiday effects, markdown impacts, and macroeconomic conditions.
+
+The analysis reveals strong seasonal cycles, significant holiday-driven demand spikes, and meaningful sensitivity to markdown activity and economic indicators such as fuel prices, CPI, and unemployment. Scenario simulations demonstrate how external shocks and promotional strategies influence sales, providing actionable insights for operational planning.
+
+This forecasting system equips Walmart with a data-driven foundation for inventory optimization, pricing strategy, promotional timing, and strategic decision-making across stores and departments. The recommendations that follow translate these insights into clear business actions that support revenue growth, operational efficiency, and resilience under changing economic conditions.
+
 ---
 
 ## 🚀 How to Run the Project
