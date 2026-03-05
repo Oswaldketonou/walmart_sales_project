@@ -1,0 +1,58 @@
+---
+title: "01 — Modeling Setup (PostgreSQL → R)"
+author: "Waldo Ketonou"
+output: html_document
+---
+
+# Introduction
+This notebook begins the R modeling workflow. All data cleaning, joins, feature engineering, and EDA were completed in PostgreSQL. The final modeling‑ready table is `modeling_clean`. This notebook connects to PostgreSQL, loads the prepared dataset, performs modeling‑readiness checks, converts variables, and creates the time‑based train/test split used in downstream modeling scripts.
+
+# Load Libraries
+```{r}
+library(DBI)
+library(RPostgres)
+library(dplyr)
+library(lubridate)
+# Connect to PostgreSQL
+```{r}
+con <- dbConnect(
+  RPostgres::Postgres(),
+  dbname   = "walmart_sales",
+  host     = "localhost",
+  port     = 5432,
+  user     = "postgres",
+  password = "mypasswordtopostegresql"
+)
+# Load modeling_clean
+```{r}
+df <- dbReadTable(con, "modeling_clean")
+glimpse(df)
+# Basic Modeling Checks
+```{r}
+summary(df)
+sapply(df, function(x) length(unique(x)))
+# Prepare Variable
+```{r}
+   df <- df %>%
+  mutate(
+    date = as.Date(date),
+    store_type = as.factor(store_type),
+    feature_is_holiday = as.factor(feature_is_holiday)
+  )
+
+names(df)[names(df) == "weekly_sales"] <- "actual_sales"
+# Time-Based Train/Test Split
+```{r}
+train_df <- df %>% filter(year < 2012)
+test_df  <- df %>% filter(year == 2012)
+
+range(train_df$date)
+range(test_df$date)
+# Save Local Copy for Modeling
+```{r}
+dir.create("data", showWarnings = FALSE)
+dir.create("data/cleaned", showWarnings = FALSE)
+
+write.csv(df, "data/cleaned/modeling_clean.csv", row.names = FALSE)
+
+ 
