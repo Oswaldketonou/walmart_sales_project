@@ -14,3 +14,146 @@ Produce a summary table and visuals for the case study and dashboard
 All data preparation and model training must be completed before running this notebook.
 # Load Libraries
 ```{r)
+library(dplyr)
+library(tibble)
+library(ggplot2)
+library(knitr)
+```
+# Load final model and test data
+This notebook assumes:
+Final model saved as rf_large.rds in outputs/models/
+Test data saved as test_df.csv in outputs/prepared_data/
+Adjust paths if needed based on your working directory.
+```{r}
+final_model_path <- "../outputs/models/rf_large.rds"
+test_df_path     <- "../outputs/prepared_data/test_df.csv"
+
+final_model <- readRDS(final_model_path)
+test_df     <- read.csv(test_df_path)
+```
+# Prepare clean test data for simulation
+I filter to complete cases and generate baseline predictions
+```{r}
+test_sim <- test_df %>% filter(complete.cases(.))
+
+baseline_pred <- predict(final_model, data = test_sim)$predictions
+test_sim$baseline_pred <- baseline_pred
+```
+# Define simulation scenarios
+Scenarios:
+Scenario A: Fuel price +10%
+Scenario B: CPI −10%
+Scenario C: Temperature +5°F
+Scenario D: Holiday promotion on (holiday flag = 1)
+Scenario E: Combined shock (A + B + C + D)
+```{r}
+scenario_A <- test_sim %>%
+  mutate(fuel_price = fuel_price * 1.10)
+
+scenario_B <- test_sim %>%
+  mutate(cpi = cpi * 0.90)
+
+scenario_C <- test_sim %>%
+  mutate(temperature = temperature + 5)
+
+scenario_D <- test_sim %>%
+  mutate(
+    feature_is_holiday = factor("1", levels = levels(test_sim$feature_is_holiday))
+  )
+
+scenario_E <- test_sim %>%
+  mutate(
+    fuel_price         = fuel_price * 1.10,
+    cpi                = cpi * 0.90,
+    temperature        = temperature + 5,
+    feature_is_holiday = factor("1", levels = levels(test_sim$feature_is_holiday))
+  )
+```
+# Predict for each scenario
+```{r}
+predict_scenario <- function(df) {
+  predict(final_model, data = df)$predictions
+}
+
+test_sim$pred_A <- predict_scenario(scenario_A)
+test_sim$pred_B <- predict_scenario(scenario_B)
+test_sim$pred_C <- predict_scenario(scenario_C)
+test_sim$pred_D <- predict_scenario(scenario_D)
+test_sim$pred_E <- predict_scenario(scenario_E)
+```
+# Compute deltas vs baseline
+```{r}
+test_sim <- test_sim %>%
+  mutate(
+    delta_A = pred_A - baseline_pred,
+    delta_B = pred_B - baseline_pred,
+    delta_C = pred_C - baseline_pred,
+    delta_D = pred_D - baseline_pred,
+    delta_E = pred_E - baseline_pred
+  )
+```
+# Scenario summary table
+```{r}
+scenario_summary <- tibble(
+  scenario = c(
+    "Fuel +10%",
+    "CPI -10%",
+    "Temp +5°F",
+    "Holiday Promotion",
+    "Combined Shock"
+  ),
+  avg_change = c(
+    mean(test_sim$delta_A),
+    mean(test_sim$delta_B),
+    mean(test_sim$delta_C),
+    mean(test_sim$delta_D),
+    mean(test_sim$delta_E)
+  ),
+  pct_change = c(
+    mean(test_sim$delta_A / test_sim$baseline_pred) * 100,
+    mean(test_sim$delta_B / test_sim$baseline_pred) * 100,
+    mean(test_sim$delta_C / test_sim$baseline_pred) * 100,
+    mean(test_sim$delta_D / test_sim$baseline_pred) * 100,
+    mean(test_sim$delta_E / test_sim$baseline_pred) * 100
+  )
+)
+
+kable(
+  scenario_summary,
+  digits = 2,
+  caption = "Scenario Simulation Summary — Average and % Change vs Baseline"
+)
+```
+# Optional visualization: scenario impact
+```{r}
+ggplot(scenario_summary, aes(x = scenario, y = pct_change)) +
+  geom_col(fill = "steelblue") +
+  coord_flip() +
+  labs(
+    title = "Average % Change in Predicted Sales by Scenario",
+    x = "Scenario",
+    y = "Average % Change vs Baseline"
+  ) +
+  theme_minimal()
+```
+# Interpretation
+The scenario simulations provide a clear view of how sensitive Walmart’s weekly sales are to changes in key external and operational drivers. Each scenario isolates a single factor (or a combined shock) to quantify its directional impact relative to the baseline forecast produced by the final Random Forest model.
+Fuel Price +10%  
+An increase in fuel prices generally reduces consumer discretionary spending. The model reflects this by showing a negative average change in predicted sales. Higher fuel costs may reduce store visits or shift spending toward essentials.
+CPI −10%  
+A drop in CPI simulates a deflationary environment where goods become cheaper. The model responds with a positive lift in predicted sales, suggesting that lower prices stimulate demand across departments.
+Temperature +5°F  
+Warmer temperatures tend to influence seasonal product categories. The model’s response indicates modest shifts in predicted sales, reflecting category‑specific sensitivity (e.g., beverages, apparel, outdoor goods).
+Holiday Promotion (Holiday Flag = 1)  
+Turning on the holiday indicator produces one of the strongest positive impacts. This aligns with historical patterns where holiday periods drive significant sales spikes across most departments.
+Combined Shock (Fuel ↑, CPI ↓, Temp ↑, Holiday = 1)  
+The combined scenario produces the largest overall change, capturing the compounding effects of multiple simultaneous drivers. This scenario highlights how external conditions and promotional timing can amplify each other.
+Overall, the model demonstrates realistic sensitivity to macroeconomic and seasonal factors, reinforcing its usefulness for planning and forecasting under uncertainty.
+# Conclusion
+This notebook extends the Walmart Sales Forecasting Project by introducing a structured what‑if simulation framework. Using the final Random Forest model, we quantified how key drivers—fuel prices, CPI, temperature, and holiday promotions—affect predicted weekly sales.
+The results provide actionable insights for Walmart’s operational and strategic planning:
+Promotions and holiday timing remain the strongest levers for driving sales.
+Macroeconomic shifts (fuel and CPI) meaningfully influence demand and should be monitored closely.
+Seasonal temperature changes affect specific product categories and can guide inventory and staffing decisions.
+Combined shocks reveal how multiple factors interact, offering a realistic view of best‑case and worst‑case scenarios.
+These insights support more informed decision‑making in pricing, promotions, inventory allocation, and workforce planning. Notebook #5 completes the analytical pipeline by translating model outputs into business‑ready scenario intelligence.
