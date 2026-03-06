@@ -138,22 +138,33 @@ ggplot(scenario_summary, aes(x = scenario, y = pct_change)) +
 ```
 # Interpretation
 The scenario simulations provide a clear view of how sensitive Walmart’s weekly sales are to changes in key external and operational drivers. Each scenario isolates a single factor (or a combined shock) to quantify its directional impact relative to the baseline forecast produced by the final Random Forest model.
+
 Fuel Price +10%  
 An increase in fuel prices generally reduces consumer discretionary spending. The model reflects this by showing a negative average change in predicted sales. Higher fuel costs may reduce store visits or shift spending toward essentials.
+
 CPI −10%  
 A drop in CPI simulates a deflationary environment where goods become cheaper. The model responds with a positive lift in predicted sales, suggesting that lower prices stimulate demand across departments.
+
 Temperature +5°F  
 Warmer temperatures tend to influence seasonal product categories. The model’s response indicates modest shifts in predicted sales, reflecting category‑specific sensitivity (e.g., beverages, apparel, outdoor goods).
+
 Holiday Promotion (Holiday Flag = 1)  
 Turning on the holiday indicator produces one of the strongest positive impacts. This aligns with historical patterns where holiday periods drive significant sales spikes across most departments.
-Combined Shock (Fuel ↑, CPI ↓, Temp ↑, Holiday = 1)  
+Combined Shock (Fuel ↑, CPI ↓, Temp ↑, Holiday = 1)
+
 The combined scenario produces the largest overall change, capturing the compounding effects of multiple simultaneous drivers. This scenario highlights how external conditions and promotional timing can amplify each other.
 Overall, the model demonstrates realistic sensitivity to macroeconomic and seasonal factors, reinforcing its usefulness for planning and forecasting under uncertainty.
+
 # Conclusion
 This notebook extends the Walmart Sales Forecasting Project by introducing a structured what‑if simulation framework. Using the final Random Forest model, we quantified how key drivers—fuel prices, CPI, temperature, and holiday promotions—affect predicted weekly sales.
+
 The results provide actionable insights for Walmart’s operational and strategic planning:
 Promotions and holiday timing remain the strongest levers for driving sales.
+
 Macroeconomic shifts (fuel and CPI) meaningfully influence demand and should be monitored closely.
+
 Seasonal temperature changes affect specific product categories and can guide inventory and staffing decisions.
+
 Combined shocks reveal how multiple factors interact, offering a realistic view of best‑case and worst‑case scenarios.
+
 These insights support more informed decision‑making in pricing, promotions, inventory allocation, and workforce planning. Notebook #5 completes the analytical pipeline by translating model outputs into business‑ready scenario intelligence.
