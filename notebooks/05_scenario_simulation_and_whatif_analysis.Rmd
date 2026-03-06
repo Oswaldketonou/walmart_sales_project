@@ -1,0 +1,16 @@
+---
+title: "05 — Scenario Simulation & What‑If Analysis"
+author: "Waldo Ketonou"
+output: html_document
+---
+# Introduction
+this notebook runs scenario simulations using the final Random Forest model from the Walmart Sales Forcasting Project.
+Model used:
+RF Large (1M rows) — final selected Random Forest model
+Goals:
+Simulate how key drivers (fuel price, CPI, temperature, holiday flag) impact weekly sales
+Quantify average and percentage change vs baseline predictions
+Produce a summary table and visuals for the case study and dashboard
+All data preparation and model training must be completed before running this notebook.
+# Load Libraries
+```{r)
