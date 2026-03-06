@@ -136,3 +136,34 @@ ggplot(viz_df, aes(x = actual, y = predicted)) +
   ) +
   theme_minimal()
 ```
+# Interpretation
+The model comparison results provide a clear view of how each algorithm performs when predicting weekly Walmart sales. Across all four models—Linear Regression, RF Small, RF Medium, and RF Large—several consistent patterns emerge.
+
+1. Random Forest models outperform Linear Regression  
+The tree‑based models consistently achieve lower RMSE, MAE, MAPE, and SMAPE values. This indicates that Walmart’s sales patterns contain nonlinear relationships and interactions that linear models cannot fully capture.
+
+2. Performance improves as training sample size increases  
+The RF Medium and RF Large models show progressively better accuracy than the RF Small model. This suggests that the model benefits from additional historical data, allowing it to learn more stable patterns across stores, departments, and time periods.
+
+3. The best model provides strong predictive alignment  
+The Actual vs Predicted plot for the best model shows close tracking between observed and forecasted sales, especially during stable periods. Deviations tend to occur during high‑volatility weeks (holidays, weather events), which is expected in retail forecasting.
+
+4. Residuals are centered and reasonably distributed  
+The residual histogram shows a symmetric, centered distribution, indicating that the model does not systematically over‑ or under‑predict. Most errors fall within a reasonable range, with fewer extreme deviations.
+
+5. Predicted vs Actual scatter confirms model reliability  
+The scatter plot aligns closely with the 45‑degree reference line, demonstrating that the model captures the magnitude of weekly sales across a wide range of values. The tight clustering around the line reinforces the model’s stability.
+
+Overall, the comparison confirms that the Random Forest Large (1M rows) model provides the strongest predictive performance and is the most reliable choice for downstream analysis, including feature importance (Notebook #4) and scenario simulation (Notebook #5).
+# Conclusion
+The model comparison results clearly demonstrate that the Random Forest models outperform Linear Regression across all evaluation metrics, confirming that Walmart’s weekly sales patterns contain nonlinear relationships best captured by tree‑based methods. Among the Random Forest variants, performance improves consistently as the training sample size increases, with the RF Large (1M rows) model delivering the lowest error rates and the strongest alignment between actual and predicted values.
+
+The visual diagnostics reinforce this conclusion:
+
+The Actual vs Predicted plot shows tight tracking for the best model.
+
+The Residual Distribution is centered and well‑behaved, indicating no major systematic bias.
+
+The Predicted vs Actual Scatter aligns closely with the 45‑degree line, confirming stable predictive accuracy across the full sales range.
+
+Based on these results, the RF Large (1M) model is selected as the final model for downstream analysis. It provides the most reliable foundation for feature importance exploration (Notebook #4) and scenario simulation (Notebook #5), completing a strong, data‑driven modeling pipeline for the Walmart Sales Forecasting Project.
