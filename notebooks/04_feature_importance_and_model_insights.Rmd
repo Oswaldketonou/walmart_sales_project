@@ -131,3 +131,32 @@ kable(
   caption = "Feature Importance Summary Across Random Forest Models"
 )
 ```
+# Interpretation
+The feature importance results provide a clear view of which variables most strongly influence the Random Forest models’ predictions of weekly Walmart sales. Across all three model sizes (200k, 500k, and 1M rows), several consistent patterns emerge.
+
+1. Stable High‑Impact Features  
+Certain features remain highly important regardless of sample size. These typically include variables tied to store characteristics, seasonality, and macroeconomic conditions. Their stability suggests they are fundamental drivers of Walmart’s sales patterns.
+
+2. Increasing Clarity with Larger Samples  
+As the training dataset grows, the importance rankings become more refined. The 1M‑row model shows sharper separation between top and mid‑tier features, indicating that more data helps the model better distinguish true signal from noise.
+
+3. Holiday and Seasonal Effects  
+Features related to holidays and temperature often rise in importance, reflecting the strong seasonal nature of retail demand. This aligns with known patterns such as holiday spikes and weather‑driven category shifts.
+
+4. Economic Sensitivity  
+Variables like fuel price and CPI show meaningful importance, suggesting that Walmart’s weekly sales respond to broader economic conditions. This is consistent with consumer behavior during inflationary or high‑fuel‑cost periods.
+
+Overall, the feature importance analysis confirms that the model is capturing realistic, business‑aligned relationships between external factors, store attributes, and sales outcomes.
+
+# Conclusion
+This notebook provides a structured interpretation of the Random Forest models by analyzing and comparing feature importance across three dataset sizes. The results highlight:
+
+Which features consistently drive sales predictions
+
+How model understanding improves with more data
+
+How external, seasonal, and economic factors shape Walmart’s sales patterns
+
+These insights deepen the interpretability of the forecasting pipeline and support downstream decision‑making in pricing, promotions, inventory planning, and scenario analysis.
+
+Notebook #4 bridges the gap between raw model performance (Notebook #3) and applied business forecasting (Notebook #5), completing the analytical story with clear, data‑driven explanations of why the model behaves the way it does.
