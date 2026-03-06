@@ -139,7 +139,7 @@ ggplot(scenario_summary, aes(x = scenario, y = pct_change)) +
 # Interpretation
 The scenario simulations provide a clear view of how sensitive Walmart’s weekly sales are to changes in key external and operational drivers. Each scenario isolates a single factor (or a combined shock) to quantify its directional impact relative to the baseline forecast produced by the final Random Forest model.
 
--Fuel Price +10%  
+- ** Fuel Price +10% **
 An increase in fuel prices generally reduces consumer discretionary spending. The model reflects this by showing a negative average change in predicted sales. Higher fuel costs may reduce store visits or shift spending toward essentials.
 
 CPI −10%  
