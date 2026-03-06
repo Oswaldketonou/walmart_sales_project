@@ -1,0 +1,133 @@
+---
+title: "04 — Feature Importance & Model Insights"
+author: "Waldo Ketonou"
+output: html_document
+---
+# Introduction
+This notebook analyzes feature importance for the Random Forest models trained in the Walmart Sales Forecasting Project.
+Models included:
+RF Small (200k rows)
+RF Medium (500k rows)
+RF Large (1M rows)
+Goals:
+Identify which features most strongly drive weekly sales
+Compare importance patterns across different sample sizes
+Provide model interpretation for the final case study and dashboard
+All data preparation and model training must be completed before running this notebook.
+# Load Librarie
+```{r}
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(tibble)
+library(knitr)
+```
+# Load Trained Models
+This notebook assumes the Random Forest models have already been traine and saved as RDS in the outputs/models/ directory.
+If you are running from a different working directory, adjust the paths accordingly.
+```{r}
+rf_small_path  <- "../outputs/models/rf_small.rds"
+rf_medium_path <- "../outputs/models/rf_medium.rds"
+rf_large_path  <- "../outputs/models/rf_large.rds"
+
+rf_small  <- readRDS(rf_small_path)
+rf_medium <- readRDS(rf_medium_path)
+rf_large  <- readRDS(rf_large_path)
+```
+# Extract Variable Importance
+I define a helper function to extract variable importance from each Random Forest model.
+```{r}
+get_importance <- function(model, model_name) {
+  
+  if (is.null(model$variable.importance)) {
+    stop(paste("Variable importance not found for model:", model_name))
+  }
+  
+  tibble(
+    feature    = names(model$variable.importance),
+    importance = as.numeric(model$variable.importance),
+    model      = model_name
+  )
+}
+
+imp_small  <- get_importance(rf_small,  "RF Small (200k)")
+imp_medium <- get_importance(rf_medium, "RF Medium (500k)")
+imp_large  <- get_importance(rf_large,  "RF Large (1M)")
+
+importance_all <- bind_rows(imp_small, imp_medium, imp_large)
+
+kable(
+  head(importance_all),
+  caption = "Raw Variable Importance (First 6 Rows)"
+)
+```
+# Normalize Importance Values
+To compare importance accross models, I normalize each model's importance values by its maximum.
+```{r}
+importance_norm <- importance_all %>%
+  group_by(model) %>%
+  mutate(norm_importance = importance / max(importance)) %>%
+  ungroup()
+
+kable(
+  head(importance_norm),
+  caption = "Normalized Variable Importance (First 6 Rows)"
+)
+```
+# Feature Importance Plots by Model
+I create a function to plot normalized importance for a single model
+```{r}
+plot_importance <- function(df, model_name) {
+  ggplot(
+    df %>% filter(model == model_name),
+    aes(x = reorder(feature, norm_importance),
+        y = norm_importance)
+  ) +
+    geom_col(fill = "steelblue") +
+    coord_flip() +
+    labs(
+      title = paste("Variable Importance —", model_name),
+      x = "Feature",
+      y = "Normalized Importance"
+    ) +
+    theme_minimal()
+}
+
+plot_importance(importance_norm, "RF Small (200k)")
+plot_importance(importance_norm, "RF Medium (500k)")
+plot_importance(importance_norm, "RF Large (1M)")
+```
+# Combined Importance Comparison
+This plot compares feature importance accroos all three Random Forest models.
+```{r}
+ggplot(
+  importance_norm,
+  aes(x = feature,
+      y = norm_importance,
+      fill = model)
+) +
+  geom_col(position = "dodge") +
+  coord_flip() +
+  labs(
+    title = "Variable Importance Comparison Across RF Models",
+    x = "Feature",
+    y = "Normalized Importance"
+  ) +
+  theme_minimal()
+```
+# Summary Table for Case Study
+I reshape the normalized importance into a wide table , sorted by the largest model's importance.
+```{r}
+importance_summary <- importance_norm %>%
+  select(feature, model, norm_importance) %>%
+  tidyr::pivot_wider(
+    names_from  = model,
+    values_from = norm_importance
+  ) %>%
+  arrange(desc(`RF Large (1M)`))
+
+kable(
+  importance_summary,
+  caption = "Feature Importance Summary Across Random Forest Models"
+)
+```
