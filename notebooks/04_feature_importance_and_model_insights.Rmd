@@ -1,44 +1,52 @@
 ---
-title: "04 — Feature Importance & Model Insights"
-author: "Waldo Ketonou"
+title: "04 – Feature Importance Analysis"
+author: "Waldo Ketonou | WaldoSphere Group LLC"
 output: html_document
 ---
-# Introduction
-This notebook analyzes feature importance for the Random Forest models trained in the Walmart Sales Forecasting Project.
-Models included:
-RF Small (200k rows)
-RF Medium (500k rows)
-RF Large (1M rows)
-Goals:
-Identify which features most strongly drive weekly sales
-Compare importance patterns across different sample sizes
-Provide model interpretation for the final case study and dashboard
-All data preparation and model training must be completed before running this notebook.
-# Load Librarie
-```{r}
+
+# Walmart Weekly Sales Forecasting  
+## Notebook 04 – Feature Importance Analysis  
+
+### Introduction  
+This notebook extracts and visualizes feature importance from all trained Random Forest models.  
+It mirrors the production script `09_feature_importance.R` and supports the case study by:
+
+- Loading all RF models trained in Notebook 02  
+- Extracting raw impurity-based feature importance  
+- Normalizing importance values for comparison  
+- Generating individual importance plots for each model  
+- Creating a combined comparison plot across all RF models  
+- Exporting a summary table for use in the final report  
+
+All visualizations are saved to `/visuals`, and the summary table is saved to `/outputs/evaluation`.
+
+---
+
+# 1. Load Libraries
+
+```{r setup, message=FALSE, warning=FALSE}
 library(dplyr)
 library(tidyr)
 library(ggplot2)
-library(tibble)
-library(knitr)
-```
-# Load Trained Models
-This notebook assumes the Random Forest models have already been traine and saved as RDS in the outputs/models/ directory.
-If you are running from a different working directory, adjust the paths accordingly.
-```{r}
-rf_small_path  <- "../outputs/models/rf_small.rds"
-rf_medium_path <- "../outputs/models/rf_medium.rds"
-rf_large_path  <- "../outputs/models/rf_large.rds"
+library(readr)
 
-rf_small  <- readRDS(rf_small_path)
-rf_medium <- readRDS(rf_medium_path)
-rf_large  <- readRDS(rf_large_path)
+cat("\n===== Feature Importance Extraction and Visualization =====\n")
+
+dir.create("visuals", recursive = TRUE, showWarnings = FALSE)
 ```
-# Extract Variable Importance
-I define a helper function to extract variable importance from each Random Forest model.
+# 2. Load Trained Random Forest Models
+These models were generated in Notebook 02 / Script 07.
 ```{r}
+rf_small1_model <- readRDS("outputs/models/rf_small1_model.rds")
+rf_small2_model <- readRDS("outputs/models/rf_small2_model.rds")
+rf_small3_model <- readRDS("outputs/models/rf_small3_model.rds")
+rf_medium_model <- readRDS("outputs/models/rf_medium_model.rds")
+rf_large_model  <- readRDS("outputs/models/rf_large_model.rds")
+```
+# 3. Extract Feature Importance
+We define a helper function to extract importance values from each model.
+```{r} 
 get_importance <- function(model, model_name) {
-  
   if (is.null(model$variable.importance)) {
     stop(paste("Variable importance not found for model:", model_name))
   }
@@ -50,39 +58,31 @@ get_importance <- function(model, model_name) {
   )
 }
 
-imp_small  <- get_importance(rf_small,  "RF Small (200k)")
-imp_medium <- get_importance(rf_medium, "RF Medium (500k)")
-imp_large  <- get_importance(rf_large,  "RF Large (1M)")
+imp_small1 <- get_importance(rf_small1_model, "RF Small1 (10k)")
+imp_small2 <- get_importance(rf_small2_model, "RF Small2 (100k)")
+imp_small3 <- get_importance(rf_small3_model, "RF Small3 (200k)")
+imp_medium <- get_importance(rf_medium_model, "RF Medium (500k)")
+imp_large  <- get_importance(rf_large_model,  "RF Large (1M)")
 
-importance_all <- bind_rows(imp_small, imp_medium, imp_large)
-
-kable(
-  head(importance_all),
-  caption = "Raw Variable Importance (First 6 Rows)"
+importance_all <- bind_rows(
+  imp_small1, imp_small2, imp_small3, imp_medium, imp_large
 )
 ```
-# Normalize Importance Values
-To compare importance accross models, I normalize each model's importance values by its maximum.
+# 4. Normalize Importance Values
+This allows comparison across models with different scales.
 ```{r}
 importance_norm <- importance_all %>%
   group_by(model) %>%
   mutate(norm_importance = importance / max(importance)) %>%
   ungroup()
-
-kable(
-  head(importance_norm),
-  caption = "Normalized Variable Importance (First 6 Rows)"
-)
 ```
-# Feature Importance Plots by Model
-I create a function to plot normalized importance for a single model
+# Plot Feature Importance for Each Model
+Each plot is saved to /visuals.
 ```{r}
-plot_importance <- function(df, model_name) {
-  ggplot(
-    df %>% filter(model == model_name),
-    aes(x = reorder(feature, norm_importance),
-        y = norm_importance)
-  ) +
+plot_importance <- function(df, model_name, file_name) {
+  p <- ggplot(df %>% filter(model == model_name),
+              aes(x = reorder(feature, norm_importance),
+                  y = norm_importance)) +
     geom_col(fill = "steelblue") +
     coord_flip() +
     labs(
@@ -90,22 +90,24 @@ plot_importance <- function(df, model_name) {
       x = "Feature",
       y = "Normalized Importance"
     ) +
-    theme_minimal()
+    theme_minimal(base_size = 14)
+  
+  ggsave(file.path("visuals", file_name), p, width = 9, height = 6)
 }
 
-plot_importance(importance_norm, "RF Small (200k)")
-plot_importance(importance_norm, "RF Medium (500k)")
-plot_importance(importance_norm, "RF Large (1M)")
+plot_importance(importance_norm, "RF Small1 (10k)",  "rf_small1_importance.png")
+plot_importance(importance_norm, "RF Small2 (100k)", "rf_small2_importance.png")
+plot_importance(importance_norm, "RF Small3 (200k)", "rf_small3_importance.png")
+plot_importance(importance_norm, "RF Medium (500k)", "rf_medium_importance.png")
+plot_importance(importance_norm, "RF Large (1M)",    "rf_large_importance.png")
 ```
-# Combined Importance Comparison
-This plot compares feature importance accroos all three Random Forest models.
+# 6. Combined Comparison Plot
+This shows how feature importance shifts as training size increases.
 ```{r}
-ggplot(
-  importance_norm,
-  aes(x = feature,
-      y = norm_importance,
-      fill = model)
-) +
+p_compare <- ggplot(importance_norm,
+                    aes(x = feature,
+                        y = norm_importance,
+                        fill = model)) +
   geom_col(position = "dodge") +
   coord_flip() +
   labs(
@@ -113,50 +115,33 @@ ggplot(
     x = "Feature",
     y = "Normalized Importance"
   ) +
-  theme_minimal()
+  theme_minimal(base_size = 14)
+
+ggsave("visuals/rf_all_models_importance_comparison.png", p_compare,
+       width = 11, height = 7)
 ```
-# Summary Table for Case Study
-I reshape the normalized importance into a wide table , sorted by the largest model's importance.
+# 7. Export Summary Table
+This table is used in the final case study.
 ```{r}
 importance_summary <- importance_norm %>%
   select(feature, model, norm_importance) %>%
-  tidyr::pivot_wider(
-    names_from  = model,
-    values_from = norm_importance
-  ) %>%
+  pivot_wider(names_from = model, values_from = norm_importance) %>%
   arrange(desc(`RF Large (1M)`))
 
-kable(
-  importance_summary,
-  caption = "Feature Importance Summary Across Random Forest Models"
-)
+write_csv(importance_summary,
+          "outputs/evaluation/rf_feature_importance_summary.csv")
+
+importance_summary
 ```
-# Interpretation
-The feature importance results provide a clear view of which variables most strongly influence the Random Forest models’ predictions of weekly Walmart sales. Across all three model sizes (200k, 500k, and 1M rows), several consistent patterns emerge.
+# . Conclusion
+This notebook successfully:
 
-1. Stable High‑Impact Features  
-Certain features remain highly important regardless of sample size. These typically include variables tied to store characteristics, seasonality, and macroeconomic conditions. Their stability suggests they are fundamental drivers of Walmart’s sales patterns.
+Extracted feature importance from all RF models
 
-2. Increasing Clarity with Larger Samples  
-As the training dataset grows, the importance rankings become more refined. The 1M‑row model shows sharper separation between top and mid‑tier features, indicating that more data helps the model better distinguish true signal from noise.
+Normalized importance values
 
-3. Holiday and Seasonal Effects  
-Features related to holidays and temperature often rise in importance, reflecting the strong seasonal nature of retail demand. This aligns with known patterns such as holiday spikes and weather‑driven category shifts.
+Generated individual and combined visualizations
 
-4. Economic Sensitivity  
-Variables like fuel price and CPI show meaningful importance, suggesting that Walmart’s weekly sales respond to broader economic conditions. This is consistent with consumer behavior during inflationary or high‑fuel‑cost periods.
+Exported a summary table for the case study
 
-Overall, the feature importance analysis confirms that the model is capturing realistic, business‑aligned relationships between external factors, store attributes, and sales outcomes.
-
-# Conclusion
-This notebook provides a structured interpretation of the Random Forest models by analyzing and comparing feature importance across three dataset sizes. The results highlight:
-
-Which features consistently drive sales predictions
-
-How model understanding improves with more data
-
-How external, seasonal, and economic factors shape Walmart’s sales patterns
-
-These insights deepen the interpretability of the forecasting pipeline and support downstream decision‑making in pricing, promotions, inventory planning, and scenario analysis.
-
-Notebook #4 bridges the gap between raw model performance (Notebook #3) and applied business forecasting (Notebook #5), completing the analytical story with clear, data‑driven explanations of why the model behaves the way it does.
+All visuals are saved in /visuals, and the summary table is saved in /outputs/evaluation.
