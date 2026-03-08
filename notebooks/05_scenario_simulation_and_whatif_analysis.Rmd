@@ -1,89 +1,83 @@
 ---
 title: "05 — Scenario Simulation & What‑If Analysis"
-author: "Waldo Ketonou"
+author: "Waldo Ketonou | WaldoSphere Group LLC"
 output: html_document
 ---
-# Introduction
-this notebook runs scenario simulations using the final Random Forest model from the Walmart Sales Forcasting Project.
-Model used:
-RF Large (1M rows) — final selected Random Forest model
-Goals:
-Simulate how key drivers (fuel price, CPI, temperature, holiday flag) impact weekly sales
-Quantify average and percentage change vs baseline predictions
-Produce a summary table and visuals for the case study and dashboard
-All data preparation and model training must be completed before running this notebook.
-# Load Libraries
-```{r)
+
+# Walmart Weekly Sales Forecasting  
+## Notebook 05 — Scenario Simulation & What‑If Analysis  
+
+### Introduction  
+This notebook performs business‑focused scenario simulations using the **final Random Forest Large model (1M rows)**.  
+It mirrors the production script `10_simulation_scenarios.R` and evaluates how predicted weekly sales respond to:
+
+- Fuel price increase (+10%)  
+- CPI decrease (–10%)  
+- Temperature increase (+5°F)  
+- Holiday promotion activation  
+- Combined shock scenario (all changes applied together)
+
+These simulations quantify operational sensitivity and support the final case study and dashboard.
+
+---
+
+# 1. Load Libraries
+
+```{r setup, message=FALSE, warning=FALSE}
 library(dplyr)
-library(tibble)
-library(ggplot2)
-library(knitr)
+library(readr)
+library(ranger)
+
+cat("\n===== Scenario Simulation: RF Large (1M rows) =====\n")
 ```
-# Load final model and test data
-This notebook assumes:
-Final model saved as rf_large.rds in outputs/models/
-Test data saved as test_df.csv in outputs/prepared_data/
-Adjust paths if needed based on your working directory.
+# 2. Load Final Model and Test Data
 ```{r}
-final_model_path <- "../outputs/models/rf_large.rds"
-test_df_path     <- "../outputs/prepared_data/test_df.csv"
+final_model <- readRDS("outputs/models/rf_large_model.rds")
 
-final_model <- readRDS(final_model_path)
-test_df     <- read.csv(test_df_path)
+test_df <- read_csv("outputs/prepared_data/test_df.csv")
+test_clean <- test_df %>% filter(complete.cases(.))
 ```
-# Prepare clean test data for simulation
-I filter to complete cases and generate baseline predictions
+# 3. Baseline Prediction
+We generate baseline predictions to compare against scenario outcomes.
 ```{r}
-test_sim <- test_df %>% filter(complete.cases(.))
-
-baseline_pred <- predict(final_model, data = test_sim)$predictions
-test_sim$baseline_pred <- baseline_pred
+baseline_pred <- predict(final_model, data = test_clean)$predictions
+test_clean$baseline_pred <- baseline_pred
 ```
-# Define simulation scenarios
-Scenarios:
-Scenario A: Fuel price +10%
-Scenario B: CPI −10%
-Scenario C: Temperature +5°F
-Scenario D: Holiday promotion on (holiday flag = 1)
-Scenario E: Combined shock (A + B + C + D)
+# 4. Define Simulation Scenarios
+Each scenario modifies one or more key drivers.
 ```{r}
-scenario_A <- test_sim %>%
-  mutate(fuel_price = fuel_price * 1.10)
+scenario_A <- test_clean %>% mutate(fuel_price = fuel_price * 1.10)
+scenario_B <- test_clean %>% mutate(cpi = cpi * 0.90)
+scenario_C <- test_clean %>% mutate(temperature = temperature + 5)
 
-scenario_B <- test_sim %>%
-  mutate(cpi = cpi * 0.90)
+scenario_D <- test_clean %>% mutate(
+  feature_is_holiday = factor("1", levels = levels(test_clean$feature_is_holiday))
+)
 
-scenario_C <- test_sim %>%
-  mutate(temperature = temperature + 5)
-
-scenario_D <- test_sim %>%
-  mutate(
-    feature_is_holiday = factor("1", levels = levels(test_sim$feature_is_holiday))
-  )
-
-scenario_E <- test_sim %>%
-  mutate(
-    fuel_price         = fuel_price * 1.10,
-    cpi                = cpi * 0.90,
-    temperature        = temperature + 5,
-    feature_is_holiday = factor("1", levels = levels(test_sim$feature_is_holiday))
-  )
+scenario_E <- test_clean %>% mutate(
+  fuel_price         = fuel_price * 1.10,
+  cpi                = cpi * 0.90,
+  temperature        = temperature + 5,
+  feature_is_holiday = factor("1", levels = levels(test_clean$feature_is_holiday))
+)
 ```
-# Predict for each scenario
+# 5. Predict for Each Scenario
+We use a helper function for clean, consistent predictions.
 ```{r}
 predict_scenario <- function(df) {
   predict(final_model, data = df)$predictions
 }
 
-test_sim$pred_A <- predict_scenario(scenario_A)
-test_sim$pred_B <- predict_scenario(scenario_B)
-test_sim$pred_C <- predict_scenario(scenario_C)
-test_sim$pred_D <- predict_scenario(scenario_D)
-test_sim$pred_E <- predict_scenario(scenario_E)
+test_clean$pred_A <- predict_scenario(scenario_A)
+test_clean$pred_B <- predict_scenario(scenario_B)
+test_clean$pred_C <- predict_scenario(scenario_C)
+test_clean$pred_D <- predict_scenario(scenario_D)
+test_clean$pred_E <- predict_scenario(scenario_E)
 ```
-# Compute deltas vs baseline
+# 6. Compute Deltas vs Baseline
+We quantify the directional impact of each scenario.
 ```{r}
-test_sim <- test_sim %>%
+test_clean <- test_clean %>%
   mutate(
     delta_A = pred_A - baseline_pred,
     delta_B = pred_B - baseline_pred,
@@ -92,7 +86,8 @@ test_sim <- test_sim %>%
     delta_E = pred_E - baseline_pred
   )
 ```
-# Scenario summary table
+# . Summary Table for Case Study
+This table is used directly in the final report and dashboard.
 ```{r}
 scenario_summary <- tibble(
   scenario = c(
@@ -103,68 +98,36 @@ scenario_summary <- tibble(
     "Combined Shock"
   ),
   avg_change = c(
-    mean(test_sim$delta_A),
-    mean(test_sim$delta_B),
-    mean(test_sim$delta_C),
-    mean(test_sim$delta_D),
-    mean(test_sim$delta_E)
+    mean(test_clean$delta_A),
+    mean(test_clean$delta_B),
+    mean(test_clean$delta_C),
+    mean(test_clean$delta_D),
+    mean(test_clean$delta_E)
   ),
   pct_change = c(
-    mean(test_sim$delta_A / test_sim$baseline_pred) * 100,
-    mean(test_sim$delta_B / test_sim$baseline_pred) * 100,
-    mean(test_sim$delta_C / test_sim$baseline_pred) * 100,
-    mean(test_sim$delta_D / test_sim$baseline_pred) * 100,
-    mean(test_sim$delta_E / test_sim$baseline_pred) * 100
+    mean(test_clean$delta_A / test_clean$baseline_pred) * 100,
+    mean(test_clean$delta_B / test_clean$baseline_pred) * 100,
+    mean(test_clean$delta_C / test_clean$baseline_pred) * 100,
+    mean(test_clean$delta_D / test_clean$baseline_pred) * 100,
+    mean(test_clean$delta_E / test_clean$baseline_pred) * 100
   )
 )
 
-kable(
-  scenario_summary,
-  digits = 2,
-  caption = "Scenario Simulation Summary — Average and % Change vs Baseline"
-)
+scenario_summary
 ```
-# Optional visualization: scenario impact
+# 8. Save Summary to Disk
 ```{r}
-ggplot(scenario_summary, aes(x = scenario, y = pct_change)) +
-  geom_col(fill = "steelblue") +
-  coord_flip() +
-  labs(
-    title = "Average % Change in Predicted Sales by Scenario",
-    x = "Scenario",
-    y = "Average % Change vs Baseline"
-  ) +
-  theme_minimal()
+write_csv(scenario_summary, "outputs/evaluation/rf_large_scenario_summary.csv")
+
+cat("\nScenario simulation complete. Summary saved to /outputs/evaluation/\n")
 ```
-# Interpretation
-The scenario simulations provide a clear view of how sensitive Walmart’s weekly sales are to changes in key external and operational drivers. Each scenario isolates a single factor (or a combined shock) to quantify its directional impact relative to the baseline forecast produced by the final Random Forest model.
+# 9. Conclusion
+This notebook successfully:
 
-Fuel Price +10% 
-An increase in fuel prices generally reduces consumer discretionary spending. The model reflects this by showing a negative average change in predicted sales. Higher fuel costs may reduce store visits or shift spending toward essentials.
+Applied five business‑relevant simulation scenarios
 
-CPI −10%  
-A drop in CPI simulates a deflationary environment where goods become cheaper. The model responds with a positive lift in predicted sales, suggesting that lower prices stimulate demand across departments.
+Generated predictions using the final RF Large model
 
-Temperature +5°F  
-Warmer temperatures tend to influence seasonal product categories. The model’s response indicates modest shifts in predicted sales, reflecting category‑specific sensitivity (e.g., beverages, apparel, outdoor goods).
+Computed average and percentage changes vs baseline
 
-Holiday Promotion (Holiday Flag = 1)  
-Turning on the holiday indicator produces one of the strongest positive impacts. This aligns with historical patterns where holiday periods drive significant sales spikes across most departments.
-Combined Shock (Fuel ↑, CPI ↓, Temp ↑, Holiday = 1)
-
-The combined scenario produces the largest overall change, capturing the compounding effects of multiple simultaneous drivers. This scenario highlights how external conditions and promotional timing can amplify each other.
-Overall, the model demonstrates realistic sensitivity to macroeconomic and seasonal factors, reinforcing its usefulness for planning and forecasting under uncertainty.
-
-# Conclusion
-This notebook extends the Walmart Sales Forecasting Project by introducing a structured what‑if simulation framework. Using the final Random Forest model, we quantified how key drivers—fuel prices, CPI, temperature, and holiday promotions—affect predicted weekly sales.
-
-The results provide actionable insights for Walmart’s operational and strategic planning:
-Promotions and holiday timing remain the strongest levers for driving sales.
-
-Macroeconomic shifts (fuel and CPI) meaningfully influence demand and should be monitored closely.
-
-Seasonal temperature changes affect specific product categories and can guide inventory and staffing decisions.
-
-Combined shocks reveal how multiple factors interact, offering a realistic view of best‑case and worst‑case scenarios.
-
-These insights support more informed decision‑making in pricing, promotions, inventory allocation, and workforce planning. Notebook #5 completes the analytical pipeline by translating model outputs into business‑ready scenario intelligence.
+Exported a clean summary table for the case study
