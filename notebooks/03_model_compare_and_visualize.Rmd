@@ -1,76 +1,99 @@
 ---
-title: "03 — Model Comparison & Visualization"
-author: "Waldo Ketonou"
+title: "03 – Model Comparison and Visualization"
+author: "Waldo Ketonou | WaldoSphere Group LLC"
 output: html_document
 ---
 
-# Introduction
-This notebook compares the performance of all trained models from the Walmart Sales Forecasting Project. The models were trained in the previous step (Notebook 02 / Script 07), and this notebook evaluates:
+# Walmart Weekly Sales Forecasting  
+## Notebook 03 – Model Comparison & Visualization  
 
-- Linear Regression  
-- Random Forest (Small: 200k rows)  
-- Random Forest (Medium: 500k rows)  
-- Random Forest (Large: 1M rows)  
+### Introduction  
+This notebook compares the performance of all trained models using the evaluation metrics defined in the project pipeline.  
+It loads predictions generated in Notebook 02 / Script 07, computes RMSE, MAE, MAPE, and SMAPE, identifies the best-performing model, and generates visualizations including:
 
-It generates a comparison table and three key visualizations:
 - Actual vs Predicted (best model)
 - Residual distribution
 - Predicted vs Actual scatter
 
-All data preparation and modeling must be completed before running this notebook.
+All outputs are saved to the `/visuals` directory for use in the final case study.
 
-# Load Libraries
-```{r}
+---
+
+# 1. Load Libraries
+
+```{r setup, message=FALSE, warning=FALSE}
 library(dplyr)
 library(ggplot2)
-library(tible)
+library(readr)
+
+cat("\n===== Model Comparison and Visualization =====\n")
 ```
-# Load Prepareed Objects
-This notebook assumes the following objects already exist in the environment:( test_df , test_clean, lm_model, rf_small, rf_medium, rf_large)
-if running standalone, load them from RDS or source the previous scripts
+# 2. Load Evaluation Data
+We load the cleaned test set to obtain the actual sales values.
+
 ```{r}
+test_df <- read_csv("outputs/prepared_data/test_df.csv")
 test_clean <- test_df %>% filter(complete.cases(.))
 eval_actual <- test_clean$actual_sales
 ```
-# Generate Predictions
+# 3. Load Predictions
+These prediction files were generated in Notebook 02 / Script 07.
 ```{r}
-lm_pred        <- predict(lm_model, newdata = test_clean)
-rf_small_pred  <- predict(rf_small$model,  data = test_clean)$predictions
-rf_medium_pred <- predict(rf_medium$model, data = test_clean)$predictions
-rf_large_pred  <- predict(rf_large$model,  data = test_clean)$predictions
+lm_pred        <- read_csv("outputs/predictions/lm_baseline_predictions.csv")$predicted
+rf_small1_pred <- read_csv("outputs/predictions/rf_small1_predictions.csv")$predicted
+rf_small2_pred <- read_csv("outputs/predictions/rf_small2_predictions.csv")$predicted
+rf_small3_pred <- read_csv("outputs/predictions/rf_small3_predictions.csv")$predicted
+rf_medium_pred <- read_csv("outputs/predictions/rf_medium_predictions.csv")$predicted
+rf_large_pred  <- read_csv("outputs/predictions/rf_large_predictions.csv")$predicted
 ```
-# Define Evaluation Metrics
+# 4. Define Evaluation Metrics
 ```{r}
-rmse  <- function(a, p) sqrt(mean((p - a)^2))
-mae   <- function(a, p) mean(abs(p - a))
-mape  <- function(a, p) mean(abs((p - a) / a)) * 100
+rmse <- function(a, p) sqrt(mean((p - a)^2))
+mae  <- function(a, p) mean(abs(p - a))
+mape <- function(a, p) mean(abs((p - a) / a)) * 100
 smape <- function(a, p) mean(2 * abs(p - a) / (abs(a) + abs(p))) * 100
 ```
-# Build Comparison Table
+# 5. Build Comparison Table
+We compute all metrics for each model and assemble them into a single tibble.
 ```{r}
 compare_tbl <- tibble(
-  model = c("Linear Regression", "RF Small (200k)", "RF Medium (500k)", "RF Large (1M)"),
+  model = c(
+    "Linear Regression",
+    "RF Small1 (10k)",
+    "RF Small2 (100k)",
+    "RF Small3 (200k)",
+    "RF Medium (500k)",
+    "RF Large (1M)"
+  ),
   RMSE  = c(
     rmse(eval_actual, lm_pred),
-    rmse(eval_actual, rf_small_pred),
+    rmse(eval_actual, rf_small1_pred),
+    rmse(eval_actual, rf_small2_pred),
+    rmse(eval_actual, rf_small3_pred),
     rmse(eval_actual, rf_medium_pred),
     rmse(eval_actual, rf_large_pred)
   ),
   MAE   = c(
     mae(eval_actual, lm_pred),
-    mae(eval_actual, rf_small_pred),
+    mae(eval_actual, rf_small1_pred),
+    mae(eval_actual, rf_small2_pred),
+    mae(eval_actual, rf_small3_pred),
     mae(eval_actual, rf_medium_pred),
     mae(eval_actual, rf_large_pred)
   ),
   MAPE  = c(
     mape(eval_actual, lm_pred),
-    mape(eval_actual, rf_small_pred),
+    mape(eval_actual, rf_small1_pred),
+    mape(eval_actual, rf_small2_pred),
+    mape(eval_actual, rf_small3_pred),
     mape(eval_actual, rf_medium_pred),
     mape(eval_actual, rf_large_pred)
   ),
   SMAPE = c(
     smape(eval_actual, lm_pred),
-    smape(eval_actual, rf_small_pred),
+    smape(eval_actual, rf_small1_pred),
+    smape(eval_actual, rf_small2_pred),
+    smape(eval_actual, rf_small3_pred),
     smape(eval_actual, rf_medium_pred),
     smape(eval_actual, rf_large_pred)
   )
@@ -78,92 +101,85 @@ compare_tbl <- tibble(
 
 compare_tbl
 ```
-# Identify Best Model
+# 6. Identify Best Model
+We select the model with the lowest RMSE.
 ```{r}
 best_model_name <- compare_tbl$model[which.min(compare_tbl$RMSE)]
 
-if (best_model_name == "Linear Regression") {
-  best_pred <- lm_pred
-} else if (best_model_name == "RF Small (200k)") {
-  best_pred <- rf_small_pred
-} else if (best_model_name == "RF Medium (500k)") {
-  best_pred <- rf_medium_pred
-} else {
-  best_pred <- rf_large_pred
-}
-
-viz_df <- tibble(
-  date = test_clean$date,
-  actual = eval_actual,
-  predicted = best_pred
+best_pred <- dplyr::case_when(
+  best_model_name == "Linear Regression" ~ lm_pred,
+  best_model_name == "RF Small1 (10k)"   ~ rf_small1_pred,
+  best_model_name == "RF Small2 (100k)"  ~ rf_small2_pred,
+  best_model_name == "RF Small3 (200k)"  ~ rf_small3_pred,
+  best_model_name == "RF Medium (500k)"  ~ rf_medium_pred,
+  TRUE                                   ~ rf_large_pred
 )
+
+cat("\nBest Model Identified:", best_model_name, "\n")
 ```
-# Actual vs Predicted Plot
+# 7. Prepare Visualization Data
+We build a tidy dataframe for plotting.
 ```{r}
-ggplot(viz_df, aes(x = date)) +
-  geom_line(aes(y = actual, color = "Actual")) +
-  geom_line(aes(y = predicted, color = "Predicted")) +
+viz_df <- tibble(
+  date      = test_clean$date,
+  actual    = eval_actual,
+  predicted = best_pred,
+  residuals = eval_actual - best_pred
+)
+
+dir.create("visuals", recursive = TRUE, showWarnings = FALSE)
+```
+# 8. Visualization — Actual vs Predicted
+A time‑series comparison of actual vs predicted sales.
+```{r}
+p1 <- ggplot(viz_df, aes(x = date)) +
+  geom_line(aes(y = actual, color = "Actual"), linewidth = 1.2) +
+  geom_line(aes(y = predicted, color = "Predicted"), linewidth = 1.2) +
   labs(
     title = paste("Actual vs Predicted Sales —", best_model_name),
-    x = "Date",
-    y = "Sales"
+    x = "Date", y = "Sales"
   ) +
   scale_color_manual(values = c("Actual" = "black", "Predicted" = "blue")) +
-  theme_minimal()
-```
-# Residual Distribution
-```{r}
-viz_df$residuals <- viz_df$actual - viz_df$predicted
+  theme_minimal(base_size = 14)
 
-ggplot(viz_df, aes(x = residuals)) +
+ggsave("visuals/best_model_actual_vs_predicted.png", p1, width = 10, height = 6)
+```
+# 9. Visualization — Residual Distribution
+This helps assess model bias and error spread.
+```{r}
+p2 <- ggplot(viz_df, aes(x = residuals)) +
   geom_histogram(bins = 50, fill = "steelblue", color = "white") +
   labs(
     title = paste("Residual Distribution —", best_model_name),
-    x = "Residuals",
-    y = "Count"
+    x = "Residuals", y = "Count"
   ) +
-  theme_minimal()
+  theme_minimal(base_size = 14)
+
+ggsave("visuals/best_model_residual_distribution.png", p2, width = 8, height = 5)
 ```
-# Predicted vs Actual Scatter
+# 0. Visualization — Predicted vs Actual Scatter
+A diagnostic scatterplot with a 45° reference line.
 ```{r}
-ggplot(viz_df, aes(x = actual, y = predicted)) +
+p3 <- ggplot(viz_df, aes(x = actual, y = predicted)) +
   geom_point(alpha = 0.4, color = "darkgreen") +
-  geom_abline(slope = 1, intercept = 0, color = "red") +
+  geom_abline(slope = 1, intercept = 0, color = "red", linewidth = 1.2) +
   labs(
     title = paste("Predicted vs Actual Scatter —", best_model_name),
-    x = "Actual Sales",
-    y = "Predicted Sales"
+    x = "Actual Sales", y = "Predicted Sales"
   ) +
-  theme_minimal()
+  theme_minimal(base_size = 14)
+
+ggsave("visuals/best_model_pred_vs_actual_scatter.png", p3, width = 8, height = 5)
+
+cat("\nSaved visualizations to /visuals/\n")
 ```
-# Interpretation
-The model comparison results provide a clear view of how each algorithm performs when predicting weekly Walmart sales. Across all four models—Linear Regression, RF Small, RF Medium, and RF Large—several consistent patterns emerge.
+# 11. Conclusion
+This notebook successfully:
 
-1. Random Forest models outperform Linear Regression  
-The tree‑based models consistently achieve lower RMSE, MAE, MAPE, and SMAPE values. This indicates that Walmart’s sales patterns contain nonlinear relationships and interactions that linear models cannot fully capture.
+Compared all trained models
 
-2. Performance improves as training sample size increases  
-The RF Medium and RF Large models show progressively better accuracy than the RF Small model. This suggests that the model benefits from additional historical data, allowing it to learn more stable patterns across stores, departments, and time periods.
+Identified the best-performing model
 
-3. The best model provides strong predictive alignment  
-The Actual vs Predicted plot for the best model shows close tracking between observed and forecasted sales, especially during stable periods. Deviations tend to occur during high‑volatility weeks (holidays, weather events), which is expected in retail forecasting.
+Generated three key diagnostic visualizations
 
-4. Residuals are centered and reasonably distributed  
-The residual histogram shows a symmetric, centered distribution, indicating that the model does not systematically over‑ or under‑predict. Most errors fall within a reasonable range, with fewer extreme deviations.
-
-5. Predicted vs Actual scatter confirms model reliability  
-The scatter plot aligns closely with the 45‑degree reference line, demonstrating that the model captures the magnitude of weekly sales across a wide range of values. The tight clustering around the line reinforces the model’s stability.
-
-Overall, the comparison confirms that the Random Forest Large (1M rows) model provides the strongest predictive performance and is the most reliable choice for downstream analysis, including feature importance (Notebook #4) and scenario simulation (Notebook #5).
-# Conclusion
-The model comparison results clearly demonstrate that the Random Forest models outperform Linear Regression across all evaluation metrics, confirming that Walmart’s weekly sales patterns contain nonlinear relationships best captured by tree‑based methods. Among the Random Forest variants, performance improves consistently as the training sample size increases, with the RF Large (1M rows) model delivering the lowest error rates and the strongest alignment between actual and predicted values.
-
-The visual diagnostics reinforce this conclusion:
-
-The Actual vs Predicted plot shows tight tracking for the best model.
-
-The Residual Distribution is centered and well‑behaved, indicating no major systematic bias.
-
-The Predicted vs Actual Scatter aligns closely with the 45‑degree line, confirming stable predictive accuracy across the full sales range.
-
-Based on these results, the RF Large (1M) model is selected as the final model for downstream analysis. It provides the most reliable foundation for feature importance exploration (Notebook #4) and scenario simulation (Notebook #5), completing a strong, data‑driven modeling pipeline for the Walmart Sales Forecasting Project.
+Saved all outputs for use in the final case study
