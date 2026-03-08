@@ -1,13 +1,13 @@
 <!-- ========================= -->
-<!--        TITLE PAGE         -->
+<!-- TITLE PAGE -->
 <!-- ========================= -->
 
 # Modeling Strategy  
 ### Walmart Weekly Sales Forecasting
 
 **Author:** Waldo KETONOU  
-**Tools:** PostgreSQL, SQL  
-**Objective:** Forecast weekly sales at the store‑department level  
+**Tools:** PostgreSQL, SQL, R  
+**Objective:** Forecast weekly sales at the store–department level  
 **Document Type:** Modeling Strategy (PDF‑Optimized)
 
 ---
@@ -16,29 +16,32 @@
 
 # 1. Problem Framing
 
-The objective of this modeling phase is to forecast weekly sales at the store‑department level using historical Walmart data.  
+The objective of this modeling phase is to **forecast weekly sales at the store–department level** using Walmart’s historical retail dataset.  
+This is a **panel time‑series regression problem**, where each store–department pair forms its own temporal sequence.
+
 The model must capture:
 
 - seasonality  
 - holiday effects  
 - markdown promotions  
-- store and department differences  
+- store and department structural differences  
 - lagged sales patterns  
+- nonlinear interactions  
 
-This is a time‑series regression forecasting problem using structured retail data.
+The final model will support scenario simulation and dashboard integration.
 
 ---
 
 # 2. Target Variable
 
-**Weekly_Sales**  
-A continuous numeric variable representing total sales for a given store, department, and week.
+### **Weekly_Sales**
 
-This makes the task a supervised regression problem with temporal dependencies.
+A continuous numeric variable representing total sales for a given **store × department × week**.  
+This is a **supervised regression task** with temporal dependencies.
 
 ---
 
-# 3. Feature Selection
+# 3. Feature Engineering
 
 The following engineered features will be used as predictors.
 
@@ -49,117 +52,143 @@ The following engineered features will be used as predictors.
 - season  
 - is_holiday  
 
-## 3.2 Lag Features
-- lagged_sales (previous week’s sales)  
-- optional: rolling averages (3‑week, 5‑week)
+## 3.2 Lag & Rolling Features
+- lagged_sales_1 (previous week’s sales)  
+- rolling_mean_3 (3‑week average)  
+- rolling_mean_5 (5‑week average)  
+
+These features capture short‑term momentum and stabilize volatility.
 
 ## 3.3 Markdown Features
 - markdown_total  
-- individual markdown columns (1–5)
+- markdown_1–5  
+
+Markdowns are sparse but meaningful during promotional periods.
 
 ## 3.4 Store & Department Identifiers
 - store  
 - dept  
 
-These capture structural differences across locations and product categories.
+These encode structural differences across locations and product categories.
 
 ## 3.5 External Features
 - temperature  
-- fuel price  
+- fuel_price  
 - CPI  
 - unemployment  
 
-Although these have low correlation, they may still provide marginal predictive value.
+These variables have **weak but non‑zero** predictive value and are retained for completeness.
+
+## 3.6 Interaction Features
+To reflect real retail dynamics:
+
+- store × dept  
+- is_holiday × markdown_total  
+- season × dept  
+
+These interactions improve nonlinear capture, especially for tree‑based models.
 
 ---
-
-<div style="page-break-after: always;"></div>
 
 # 4. Train/Test Split Strategy
 
-Because this is time‑series data, a random split is not allowed.
+A **chronological panel split** is used to prevent leakage:
 
-A chronological split will be used:
+- **Training:** 2010–2011  
+- **Testing:** 2012  
 
-- Training: 2010–2011  
-- Testing: 2012  
-
-This preserves temporal order and simulates real‑world forecasting conditions.
+Splits are performed **within each store–department group** to preserve temporal order.
 
 ---
 
-# 5. Baseline Model
+# 5. Baseline Models
 
-A baseline model establishes the minimum performance threshold.
+Baselines establish the minimum acceptable performance.
 
 ## 5.1 Naïve Lag Model
+
 
 \[
 \hat{y}_t = y_{t-1}
 \]
 
-This uses last week’s sales as the prediction for the current week.  
-All advanced models must outperform this baseline to be considered useful.
+
+
+## 5.2 Rolling Mean Baseline
+
+
+\[
+\hat{y}_t = \text{mean}(y_{t-3:t-1})
+\]
+
+
+
+All advanced models must outperform both baselines.
 
 ---
 
 # 6. Candidate Models
 
-The following models will be evaluated.
+These models align with the actual workflow and dataset structure.
 
 ## 6.1 Linear Regression
 - interpretable  
 - fast  
-- strong baseline for comparison  
+- strong structural baseline  
 
-## 6.2 Regularized Models
+## 6.2 Regularized Linear Models
 - Ridge  
 - Lasso  
 - Elastic Net  
 
-Useful for handling multicollinearity and reducing overfitting.
+Useful for multicollinearity and feature selection.
 
 ## 6.3 Tree‑Based Models
 - Random Forest  
 - Gradient Boosting  
 - XGBoost  
 
-These capture nonlinear relationships and interactions between features.
+These capture nonlinearities, interactions, and sparse markdown effects.
 
-## 6.4 Optional Time‑Series Models
-- ARIMA  
-- SARIMA  
-
-Useful for pure time‑series patterns but less flexible with many features.
+**Note:**  
+ARIMA/SARIMA are intentionally excluded because they do not scale to panel data and cannot incorporate markdowns or external features effectively.
 
 ---
 
-<div style="page-break-after: always;"></div>
-
 # 7. Evaluation Metrics
 
-The following KPIs will be used to evaluate model performance:
+The following KPIs will be computed **per store–department** and **overall**:
 
 - Mean Absolute Error (MAE)  
-- Mean Absolute Percentage Error (MAPE)
-- Symmetric Mean Absolute Percentage Error (SMAPE)
+- Mean Absolute Percentage Error (MAPE)  
+- Symmetric MAPE (SMAPE)  
 - Root Mean Squared Error (RMSE)  
 - R²  
 
-MAPE will be the primary business metric due to its interpretability.
+### **Primary Business Metric: MAPE**  
+Chosen for interpretability and comparability across departments.
+
+### Additional Analysis
+- error distribution plots  
+- residual seasonality checks  
+- department‑level performance variance  
 
 ---
 
 # 8. Assumptions & Constraints
 
-- Sales patterns are influenced by seasonality and holidays  
-- Markdown effects are modest but positive  
-- Weather and economic variables have minimal impact  
-- Data is non‑stationary across years  
-- Some store‑department combinations have sparse history  
-- No future markdowns or holiday schedules beyond the dataset are known  
+### Sales Drivers
+- Seasonality and holidays strongly influence sales  
+- Markdown effects are positive but vary by department  
+- External variables (fuel, CPI, unemployment) have **weak but non‑zero** impact  
 
-These constraints guide model selection and feature engineering.
+### Data Characteristics
+- Non‑stationary across years  
+- Sparse markdowns  
+- Some store–department combinations have limited history  
+- No future markdowns or holiday schedules beyond the dataset  
+
+These constraints inform model selection and feature engineering.
 
 ---
 
@@ -167,25 +196,23 @@ These constraints guide model selection and feature engineering.
 
 - Missing markdown and weather data  
 - Structural changes in 2012 may reduce accuracy  
-- Sparse data for certain departments  
+- Sparse departments may underperform  
 - Holiday effects vary year‑to‑year  
 - Markdown data lacks promotion context  
 
-These risks will be addressed through model comparison and feature engineering.
+These risks will be mitigated through model comparison, regularization, and tree‑based methods.
 
 ---
 
-<div style="page-break-after: always;"></div>
+# 10. Workflow & Next Steps
 
-# 10. Next Steps
-
-1. Build the baseline model  
-2. Train and evaluate candidate models  
-3. Compare performance using MAE, MAPE, RMSE, R²  
-4. Select the best model  
-5. Document results in the case study  
-6. Integrate results into the dashboard  
+1. Build baseline models  
+2. Train linear and regularized models  
+3. Train tree‑based models  
+4. Evaluate using MAE, MAPE, RMSE, R²  
+5. Select best model based on MAPE + stability  
+6. Generate scenario simulations (markdown, holiday, fuel price)  
+7. Export predictions for dashboard integration  
+8. Document results in the case study  
 
 ---
-
-# End of Document
