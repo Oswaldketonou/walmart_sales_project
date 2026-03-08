@@ -1,0 +1,14 @@
+# ============================================================
+# Walmart Sales Forecasting Project — .gitignore
+# Author: Waldo Ketonou | WaldoSphere Group LLC
+# Purpose: Keep repo lightweight, professional, and recruiter‑ready
+# ============================================================
+
+outputs/prepared_data/
+outputs/models/
+*.rds
+*.csv
+*.csv.gz
+*.csv.zip
+!outputs/evaluation/*.csv
+...
