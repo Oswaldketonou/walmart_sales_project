@@ -1,0 +1,151 @@
+---
+title: "06 — Final Case Study: Walmart Weekly Sales Forecasting"
+author: "Waldo Ketonou | WaldoSphere Group LLC"
+output: html_document
+---
+
+# Walmart Weekly Sales Forecasting  
+## Notebook 06 — Final Case Study  
+
+### Executive Summary  
+This case study presents a complete end‑to‑end forecasting pipeline for Walmart weekly sales, integrating SQL‑based data preparation, feature engineering, machine learning modeling, model comparison, feature importance analysis, and scenario simulation.
+
+The final model — **Random Forest (1M sample)** — delivered the strongest predictive performance and served as the foundation for business‑focused what‑if simulations.
+
+This notebook consolidates results from all previous notebooks and presents the final insights in a narrative format suitable for recruiters, stakeholders, and portfolio reviewers.
+
+---
+
+# 1. Project Overview  
+
+### Business Problem  
+Walmart must forecast weekly sales across stores and departments to optimize staffing, inventory, promotions, and supply chain operations.  
+Accurate forecasting reduces stockouts, improves labor planning, and increases profitability.
+
+### Objectives  
+- Build a forecasting model using historical sales and external factors  
+- Compare multiple model families  
+- Identify key drivers of sales  
+- Simulate business scenarios to quantify impact  
+
+### Data Sources  
+- Historical weekly sales  
+- Markdown and promotion data  
+- Temperature, fuel price, CPI, unemployment  
+- Holiday indicators  
+- Store metadata  
+
+---
+
+# 2. Load Required Libraries  
+
+```{r setup, message=FALSE, warning=FALSE}
+library(dplyr)
+library(readr)
+library(ggplot2)
+library(tidyr)
+```
+# 3. Load Prepared Outputs
+. We load the outputs generated in earlier notebooks:
+. Model comparison table
+. Feature importance summary
+. Scenario simulation summary
+```{r}
+compare_tbl <- read_csv("outputs/evaluation/model_comparison.csv")
+importance_summary <- read_csv("outputs/evaluation/rf_feature_importance_summary.csv")
+scenario_summary <- read_csv("outputs/evaluation/rf_large_scenario_summary.csv")
+```
+# 4. Model Performance Summary
+Best Model
+We identify the best model based on RMSE.
+```{r}
+best_model <- compare_tbl %>% arrange(RMSE) %>% slice(1)
+best_model
+```
+Interpretation:  
+The Random Forest Large (1M rows) model achieved the lowest RMSE, confirming that larger training samples improved predictive accuracy.
+# 5. Feature Importance Insights
+Load and Display Summary Table
+```{r}
+importance_summary
+```
+Key Insights
+. Lag features (lag_4_weeks, rolling_4_week, rolling_12_week) consistently ranked highest.
+
+. Holiday indicator showed strong importance, confirming seasonal uplift.
+
+. Fuel price, CPI, and temperature contributed meaningfully, validating the inclusion of external economic factors.
+
+. Importance stabilized as training size increased, indicating model robustness.
+# 6. Scenario Simulation Results
+Load Scenario Summary
+```{r}
+scenario_summary
+```
+Interpretation
+. Fuel +10% → Slight negative impact on predicted sales
+
+. CPI –10% → Positive lift, suggesting increased consumer purchasing power
+
+. Temperature +5°F → Mild positive effect (seasonal sensitivity)
+
+. Holiday Promotion → Strongest positive uplift
+
+. Combined Shock → Largest overall increase, driven by holiday effect
+
+These insights support operational planning and promotional strategy.
+
+# 7. Visualizations
+Best Model: Actual vs Predicted
+```{r}
+knitr::include_graphics("visuals/best_model_actual_vs_predicted.png")
+```
+Residual Distribution
+```{r}
+knitr::include_graphics("visuals/best_model_residual_distribution.png")
+```
+Predicted vs Actual Scatter
+```{r}
+knitr::include_graphics("visuals/best_model_pred_vs_actual_scatter.png")
+```
+Feature Importance Comparison
+```{r}
+knitr::include_graphics("visuals/rf_all_models_importance_comparison.png")
+```
+# 8. Final Recommendations
+Operational Recommendations
+. Use RF Large model for weekly forecasting due to superior accuracy.
+
+. Prioritize holiday promotions, which show the strongest uplift.
+
+. Monitor fuel price and CPI, as they meaningfully influence demand.
+
+. Incorporate temperature forecasts into short‑term planning.
+
+Future Enhancements
+. Add LSTM or Prophet models for long‑term seasonality
+
+. Incorporate regional economic indicators
+
+. Build a real‑time dashboard for store managers
+
+# 9. Conclusion
+This project demonstrates a complete machine learning workflow:
+
+. SQL‑based data engineering
+
+. Feature creation
+
+. Multiple model families
+
+. Scaling experiments
+
+. Feature importance analysis
+
+. Scenario simulation
+
+. Business insights
+
+The final Random Forest model provides strong predictive performance and actionable insights for Walmart’s operational planning.
+
+
