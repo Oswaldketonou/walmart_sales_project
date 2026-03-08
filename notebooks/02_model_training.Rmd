@@ -1,123 +1,384 @@
 ---
-title: "02 — Model Training (Linear Regression + Random Forest Scaling)"
-author: "Waldo Ketonou"
+title: "02 – Model Training Notebook"
+author: "Waldo Ketonou | WaldoSphere Group LLC"
 output: html_document
 ---
 
-# Introduction
-This notebook trains the forecasting models used in the Walmart Sales Forecasting Project. All data cleaning, feature engineering, and EDA were completed in PostgreSQL. The prepared modeling datasets (`train_df` and `test_df`) were generated in the previous step of the R workflow. This notebook trains:
+# Walmart Weekly Sales Forecasting  
+## Notebook 02 – Model Training  
 
-- A baseline Linear Regression model  
-- Three Random Forest models at increasing sample sizes (200k, 500k, 1M rows)
+### Introduction  
+This notebook documents the full modeling workflow for the Walmart Weekly Sales Forecasting project.  
+It mirrors the production script `07_model_training.R` and:
 
-Performance is evaluated using RMSE, MAE, MAPE, and SMAPE.
+- Trains a baseline linear regression model using unified predictors  
+- Runs Random Forest scaling experiments (SMALL1: 10k, SMALL2: 100k, SMALL3: 200k, MEDIUM: 500k, LARGE: 1M)  
+- Saves all model objects, predictions, and evaluation metrics for downstream analysis, visualization, and scenario simulation.
 
-# Load Libraries
-```{r}
+---
+
+# 1. Environment Setup
+
+```{r setup, message=FALSE, warning=FALSE}
+rm(list = ls())
+gc()
+cat("\014")
+if (!is.null(dev.list())) dev.off()
+
 library(dplyr)
+library(readr)
 library(ranger)
+
+cat("Environment cleared. Ready to load train/test CSVs.\n")
 ```
-# Load Prepared Train/Test Data
+# 2. Baseline Linear Regression Model
 ```{r}
-train_df <- read.csv("outputs/prepared_data/train_df.csv")
-test_df  <- read.csv("outputs/prepared_data/test_df.csv")
+cat("\n===== Linear Regression: BASELINE MODEL =====\n")
 
-train_clean <- train_df %>% filter(complete.cases(.))
-test_clean  <- test_df  %>% filter(complete.cases(.))
-
-eval_actual <- test_clean$actual_sales
-```
-# Baseline Linear Regression Mosel
-```{r}
-lm_model <- lm(
-  actual_sales ~ lag_4_weeks + rolling_4_week + rolling_12_week +
-    feature_is_holiday + temperature + fuel_price + cpi + unemployment +
-    store_type + store_size + week + month + year,
-  data = train_df
-)
-
-summary(lm_model)
-
-lm_pred <- predict(lm_model, newdata = test_df)
-
-eval_idx    <- !is.na(lm_pred)
-eval_pred   <- lm_pred[eval_idx]
-eval_actual <- test_df$actual_sales[eval_idx]
-
-rmse_lm <- sqrt(mean((eval_pred - eval_actual)^2))
-mae_lm  <- mean(abs(eval_pred - eval_actual))
-mape_lm <- mean(abs((eval_pred - eval_actual) / eval_actual)) * 100
+train_clean <- read_csv("outputs/prepared_data/train_df.csv")
+test_df     <- read_csv("outputs/prepared_data/test_df.csv")
+test_clean  <- test_df %>% filter(complete.cases(.))
 
 smape <- function(actual, predicted) {
   mean(2 * abs(predicted - actual) / (abs(actual) + abs(predicted))) * 100
 }
 
+lm_formula <- actual_sales ~ 
+  lag_4_weeks + rolling_4_week + rolling_12_week +
+  feature_is_holiday + temperature + fuel_price + cpi + unemployment +
+  store_type + store_size + week + month + year
+
+lm_model <- lm(lm_formula, data = train_clean)
+lm_pred  <- predict(lm_model, newdata = test_clean)
+
+eval_idx    <- !is.na(lm_pred)
+eval_pred   <- lm_pred[eval_idx]
+eval_actual <- test_clean$actual_sales[eval_idx]
+
+rmse_lm  <- sqrt(mean((eval_pred - eval_actual)^2))
+mae_lm   <- mean(abs(eval_pred - eval_actual))
+mape_lm  <- mean(abs((eval_pred - eval_actual) / eval_actual)) * 100
 smape_lm <- smape(eval_actual, eval_pred)
 
-cat("\n===== Linear Regression Results =====\n")
+dir.create("outputs/models", recursive = TRUE, showWarnings = FALSE)
+dir.create("outputs/predictions", recursive = TRUE, showWarnings = FALSE)
+dir.create("outputs/evaluation", recursive = TRUE, showWarnings = FALSE)
+
+saveRDS(lm_model, "outputs/models/lm_baseline_model.rds")
+
+write_csv(
+  tibble(actual = eval_actual, predicted = eval_pred),
+  "outputs/predictions/lm_baseline_predictions.csv"
+)
+
+write_csv(
+  tibble(rmse = rmse_lm, mae = mae_lm, mape = mape_lm, smape = smape_lm),
+  "outputs/evaluation/lm_baseline_metrics.csv"
+)
+
 cat("RMSE :", rmse_lm, "\n")
 cat("MAE  :", mae_lm, "\n")
 cat("MAPE :", mape_lm, "%\n")
 cat("SMAPE:", smape_lm, "%\n")
+
+rm(list = ls())
+gc()
 ```
-# Randome Forest Scaling Experiments
+# 3. Random Forest Scaling Eexperiments 
+We train RF models at sample size: 10k → 100k → 200k → 500k → 1M
+## 3A. SMALL1 — 10,000 rows
 ```{r}
-train_rf_model <- function(sample_size, num_trees = 200) {
+cat("\n===== Random Forest: SMALL1 (10k rows) =====\n")
 
-  set.seed(123)
-  sampled_df <- train_clean %>% sample_n(sample_size)
+train_clean <- read_csv("outputs/prepared_data/train_df.csv")
+test_df     <- read_csv("outputs/prepared_data/test_df.csv")
+test_clean  <- test_df %>% filter(complete.cases(.))
 
-  rf_model <- ranger(
-    formula        = actual_sales ~ lag_4_weeks + feature_is_holiday + temperature +
-                       fuel_price + cpi + store_type + store_size + week + month + year,
-    data           = sampled_df,
-    num.trees      = num_trees,
-    write.forest   = TRUE,
-    num.threads    = 1,
-    importance     = "impurity"
-  )
-
-  rf_pred <- predict(rf_model, data = test_clean)$predictions
-
-  rmse_val  <- sqrt(mean((rf_pred - eval_actual)^2))
-  mae_val   <- mean(abs(rf_pred - eval_actual))
-  mape_val  <- mean(abs((rf_pred - eval_actual) / eval_actual)) * 100
-  smape_val <- smape(eval_actual, rf_pred)
-
-  list(
-    model = rf_model,
-    rmse  = rmse_val,
-    mae   = mae_val,
-    mape  = mape_val,
-    smape = smape_val
-  )
+smape <- function(actual, predicted) {
+  mean(2 * abs(predicted - actual) / (abs(actual) + abs(predicted))) * 100
 }
+
+set.seed(123)
+sampled_train <- train_clean %>% filter(complete.cases(.)) %>% sample_n(10000)
+
+rf_small1_model <- ranger(
+  formula = actual_sales ~ lag_4_weeks + rolling_4_week + rolling_12_week +
+    feature_is_holiday + temperature + fuel_price + cpi + unemployment +
+    store_type + store_size + week + month + year,
+  data = sampled_train,
+  num.trees = 200,
+  write.forest = TRUE,
+  num.threads = 1,
+  importance = "impurity"
+)
+
+rf_small1_pred   <- predict(rf_small1_model, data = test_clean)$predictions
+rf_small1_actual <- test_clean$actual_sales
+
+rf_small1_rmse  <- sqrt(mean((rf_small1_pred - rf_small1_actual)^2))
+rf_small1_mae   <- mean(abs(rf_small1_pred - rf_small1_actual))
+rf_small1_mape  <- mean(abs((rf_small1_pred - rf_small1_actual) / rf_small1_actual)) * 100
+rf_small1_smape <- smape(rf_small1_actual, rf_small1_pred)
+
+saveRDS(rf_small1_model, "outputs/models/rf_small1_model.rds")
+
+write_csv(
+  tibble(actual = rf_small1_actual, predicted = rf_small1_pred),
+  "outputs/predictions/rf_small1_predictions.csv"
+)
+
+write_csv(
+  tibble(rmse = rf_small1_rmse, mae = rf_small1_mae, mape = rf_small1_mape, smape = rf_small1_smape),
+  "outputs/evaluation/rf_small1_metrics.csv"
+)
+
+cat("RMSE :", rf_small1_rmse, "\n")
+cat("MAE  :", rf_small1_mae, "\n")
+cat("MAPE :", rf_small1_mape, "%\n")
+cat("SMAPE:", rf_small1_smape, "%\n")
+
+rm(list = ls())
+gc()
 ```
-# Random Forest- Small(200k Rows)
+## 3B. SMALL2 — 100,000 rows
 ```{r}
-cat("\n===== Random Forest: SMALL (200k rows) =====\n")
-rf_small <- train_rf_model(200000)
+cat("\n===== Random Forest: SMALL2 (100k rows) =====\n")
 
-cat("RMSE :", rf_small$rmse, "\n")
-cat("MAE  :", rf_small$mae, "\n")
-cat("MAPE :", rf_small$mape, "%\n")
-cat("SMAPE:", rf_small$smape, "%\n")
+train_clean <- read_csv("outputs/prepared_data/train_df.csv")
+test_df     <- read_csv("outputs/prepared_data/test_df.csv")
+test_clean  <- test_df %>% filter(complete.cases(.))
+
+smape <- function(actual, predicted) {
+  mean(2 * abs(predicted - actual) / (abs(actual) + abs(predicted))) * 100
+}
+
+set.seed(123)
+sampled_train <- train_clean %>% filter(complete.cases(.)) %>% sample_n(100000)
+
+rf_small2_model <- ranger(
+  formula = actual_sales ~ lag_4_weeks + rolling_4_week + rolling_12_week +
+    feature_is_holiday + temperature + fuel_price + cpi + unemployment +
+    store_type + store_size + week + month + year,
+  data = sampled_train,
+  num.trees = 200,
+  write.forest = TRUE,
+  num.threads = 1,
+  importance = "impurity"
+)
+
+rf_small2_pred   <- predict(rf_small2_model, data = test_clean)$predictions
+rf_small2_actual <- test_clean$actual_sales
+
+rf_small2_rmse  <- sqrt(mean((rf_small2_pred - rf_small2_actual)^2))
+rf_small2_mae   <- mean(abs(rf_small2_pred - rf_small2_actual))
+rf_small2_mape  <- mean(abs((rf_small2_pred - rf_small2_actual) / rf_small2_actual)) * 100
+rf_small2_smape <- smape(rf_small2_actual, rf_small2_pred)
+
+saveRDS(rf_small2_model, "outputs/models/rf_small2_model.rds")
+
+write_csv(
+  tibble(actual = rf_small2_actual, predicted = rf_small2_pred),
+  "outputs/predictions/rf_small2_predictions.csv"
+)
+
+write_csv(
+  tibble(rmse = rf_small2_rmse, mae = rf_small2_mae, mape = rf_small2_mape, smape = rf_small2_smape),
+  "outputs/evaluation/rf_small2_metrics.csv"
+)
+
+cat("RMSE :", rf_small2_rmse, "\n")
+cat("MAE  :", rf_small2_mae, "\n")
+cat("MAPE :", rf_small2_mape, "%\n")
+cat("SMAPE:", rf_small2_smape, "%\n")
+
+rm(list = ls())
+gc()
 ```
-# Random Forest - Medium (500k Rows)
-```(r}
+## 3C. SMALL3 — 200,000 rows
+```{r}
+cat("\n===== Random Forest: SMALL3 (200k rows) =====\n")
+
+train_clean <- read_csv("outputs/prepared_data/train_df.csv")
+test_df     <- read_csv("outputs/prepared_data/test_df.csv")
+test_clean  <- test_df %>% filter(complete.cases(.))
+
+smape <- function(actual, predicted) {
+  mean(2 * abs(predicted - actual) / (abs(actual) + abs(predicted))) * 100
+}
+
+set.seed(123)
+sampled_train <- train_clean %>% filter(complete.cases(.)) %>% sample_n(200000)
+
+rf_small3_model <- ranger(
+  formula = actual_sales ~ lag_4_weeks + rolling_4_week + rolling_12_week +
+    feature_is_holiday + temperature + fuel_price + cpi + unemployment +
+    store_type + store_size + week + month + year,
+  data = sampled_train,
+  num.trees = 200,
+  write.forest = TRUE,
+  num.threads = 1,
+  importance = "impurity"
+)
+
+rf_small3_pred   <- predict(rf_small3_model, data = test_clean)$predictions
+rf_small3_actual <- test_clean$actual_sales
+
+rf_small3_rmse  <- sqrt(mean((rf_small3_pred - rf_small3_actual)^2))
+rf_small3_mae   <- mean(abs(rf_small3_pred - rf_small3_actual))
+rf_small3_mape  <- mean(abs((rf_small3_pred - rf_small3_actual) / rf_small3_actual)) * 100
+rf_small3_smape <- smape(rf_small3_actual, rf_small3_pred)
+
+saveRDS(rf_small3_model, "outputs/models/rf_small3_model.rds")
+
+write_csv(
+  tibble(actual = rf_small3_actual, predicted = rf_small3_pred),
+  "outputs/predictions/rf_small3_predictions.csv"
+)
+
+write_csv(
+  tibble(rmse = rf_small3_rmse, mae = rf_small3_mae, mape = rf_small3_mape, smape = rf_small3_smape),
+  "outputs/evaluation/rf_small3_metrics.csv"
+)
+
+cat("RMSE :", rf_small3_rmse, "\n")
+cat("MAE  :", rf_small3_mae, "\n")
+cat("MAPE :", rf_small3_mape, "%\n")
+cat("SMAPE:", rf_small3_smape, "%\n")
+
+rm(list = ls())
+gc()
+```
+## 3D. MEDIUM — 500,000 rows
+```{r}
 cat("\n===== Random Forest: MEDIUM (500k rows) =====\n")
-rf_medium <- train_rf_model(500000)
 
-cat("RMSE :", rf_medium$rmse, "\n")
-cat("MAE  :", rf_medium$mae, "\n")
-cat("MAPE :", rf_medium$mape, "%\n")
-cat("SMAPE:", rf_medium$smape, "%\n")
-# Random Forest - Large (1M Rows)
-cat("\n===== Random Forest: LARGE (1M rows) =====\n")
-rf_large <- train_rf_model(1000000)
+train_clean <- read_csv("outputs/prepared_data/train_df.csv")
+test_df     <- read_csv("outputs/prepared_data/test_df.csv")
+test_clean  <- test_df %>% filter(complete.cases(.))
 
-cat("RMSE :", rf_large$rmse, "\n")
-cat("MAE  :", rf_large$mae, "\n")
-cat("MAPE :", rf_large$mape, "%\n")
-cat("SMAPE:", rf_large$smape, "%\n")
+smape <- function(actual, predicted) {
+  mean(2 * abs(predicted - actual) / (abs(actual) + abs(predicted))) * 100
+}
+
+set.seed(123)
+sampled_train <- train_clean %>% filter(complete.cases(.)) %>% sample_n(500000)
+
+rf_medium_model <- ranger(
+  formula = actual_sales ~ lag_4_weeks + rolling_4_week + rolling_12_week +
+    feature_is_holiday + temperature + fuel_price + cpi + unemployment +
+    store_type + store_size + week + month + year,
+  data = sampled_train,
+  num.trees = 200,
+  write.forest = TRUE,
+  num.threads = 1,
+  importance = "impurity"
+)
+
+rf_medium_pred   <- predict(rf_medium_model, data = test_clean)$predictions
+rf_medium_actual <- test_clean$actual_sales
+
+rf_medium_rmse  <- sqrt(mean((rf_medium_pred - rf_medium_actual)^2))
+rf_medium_mae   <- mean(abs(rf_medium_pred - rf_medium_actual))
+rf_medium_mape  <- mean(abs((rf_medium_pred - rf_medium_actual) / rf_medium_actual)) * 100
+rf_medium_smape <- smape(rf_medium_actual, rf_medium_pred)
+
+saveRDS(rf_medium_model, "outputs/models/rf_medium_model.rds")
+
+write_csv(
+  tibble(actual = rf_medium_actual, predicted = rf_medium_pred),
+  "outputs/predictions/rf_medium_predictions.csv"
+)
+
+write_csv(
+  tibble(rmse = rf_medium_rmse, mae = rf_medium_mae, mape = rf_medium_mape, smape = rf_medium_smape),
+  "outputs/evaluation/rf_medium_metrics.csv"
+)
+
+cat("RMSE :", rf_medium_rmse, "\n")
+cat("MAE  :", rf_medium_mae, "\n")
+cat("MAPE :", rf_medium_mape, "%\n")
+cat("SMAPE:", rf_medium_smape, "%\n")
+
+rm(list = ls())
+gc()
 ```
+## 3E. LARGE — 1,000,000 rows 
+```{r}
+cat("\n===== Random Forest: LARGE (1M rows) =====\n")
+
+train_clean <- read_csv("outputs/prepared_data/train_df.csv")
+test_df     <- read_csv("outputs/prepared_data/test_df.csv")
+test_clean  <- test_df %>% filter(complete.cases(.))
+
+smape <- function(actual, predicted) {
+  mean(2 * abs(predicted - actual) / (abs(actual) + abs(predicted))) * 100
+}
+
+set.seed(123)
+sampled_train <- train_clean %>% filter(complete.cases(.)) %>% sample_n(1000000)
+
+rf_large_model <- ranger(
+  formula = actual_sales ~ lag_4_weeks + rolling_4_week + rolling_12_week +
+    feature_is_holiday + temperature + fuel_price + cpi + unemployment +
+    store_type + store_size + week + month + year,
+  data = sampled_train,
+  num.trees = 200,
+  write.forest = TRUE,
+  num.threads = 1,
+  importance = "impurity"
+)
+
+rf_large_pred   <- predict(rf_large_model, data = test_clean)$predictions
+rf_large_actual <- test_clean$actual_sales
+
+rf_large_rmse  <- sqrt(mean((rf_large_pred - rf_large_actual)^2))
+rf_large_mae   <- mean(abs(rf_large_pred - rf_large_actual))
+rf_large_mape  <- mean(abs((rf_large_pred - rf_large_actual) / rf_large_actual)) * 100
+rf_large_smape <- smape(rf_large_actual, rf_large_pred)
+
+saveRDS(rf_large_model, "outputs/models/rf_large_model.rds")
+
+write_csv(
+  tibble(actual = rf_large_actual, predicted = rf_large_pred),
+  "outputs/predictions/rf_large_predictions.csv"
+)
+
+write_csv(
+  tibble(rmse = rf_large_rmse, mae = rf_large_mae, mape = rf_large_mape, smape = rf_large_smape),
+  "outputs/evaluation/rf_large_metrics.csv"
+)
+
+cat("RMSE :", rf_large_rmse, "\n")
+cat("MAE  :", rf_large_mae, "\n")
+cat("MAPE :", rf_large_mape, "%\n")
+cat("SMAPE:", rf_large_smape, "%\n")
+
+rm(list = ls())
+gc()
+```
+# 4. Diagnostic Visualizations
+```{r}
+if (!dir.exists("visuals")) dir.create("visuals")
+
+# Linear Model: Predicted vs Actual
+png("visuals/lm_pred_vs_actual.png", width = 1200, height = 800)
+plot(eval_actual, eval_pred,
+     main = "Linear Model: Predicted vs Actual",
+     xlab = "Actual Sales",
+     ylab = "Predicted Sales",
+     pch = 16, col = rgb(0, 0, 1, 0.4))
+abline(0, 1, col = "red", lwd = 2)
+dev.off()
+
+# Linear Model: Residuals
+png("visuals/lm_residuals.png", width = 1200, height = 800)
+plot(eval_pred - eval_actual,
+     main = "Linear Model Residuals",
+     xlab = "Index",
+     ylab = "Residual",
+     pch = 16, col = rgb(1, 0, 0, 0.4))
+abline(h = 0, col = "blue", lwd = 2)
+dev.off()
+```
+# 5. Conclusion
+All models have been trained and saved.
