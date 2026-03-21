@@ -1,7 +1,7 @@
 # =====================================================================
 # Walmart Sales Forecasting Project
 # 10_simulation_scenarios.R
-# Author: Waldo Ketonou | WaldoSphere Group LLC
+# Author: Waldo Ketonou | WaldoSphere Group
 # Purpose: Run scenario simulations using final RF model (1M sample)
 # Requires: 07_model_training.R
 # =====================================================================
