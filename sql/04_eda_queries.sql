@@ -1,7 +1,7 @@
 -- =====================================================================
 -- Walmart Sales Forecasting Project
 -- 04_eda.sql
--- Author: Waldo Ketonou | WaldoSphere Group LLC
+-- Author: Waldo Ketonou | WaldoSphere Group 
 -- Purpose: Exploratory Data Analysis on walmart_master_fe
 -- =====================================================================
 
