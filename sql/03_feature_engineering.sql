@@ -1,7 +1,7 @@
 /* ============================================================
    03_feature_engineering.sql
    Walmart Weekly Sales Forecasting
-   Author: Waldo Ketonou
+   Author: Waldo Ketonou | WaldoSphere Group
    Purpose: Create modeling-ready feature table aligned with R scripts
    ============================================================ */
 
