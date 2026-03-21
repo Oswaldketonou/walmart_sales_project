@@ -1,7 +1,7 @@
 # =====================================================================
 # Walmart Sales Forecasting Project
 # 09_feature_importance.R
-# Author: Waldo Ketonou | WaldoSphere Group LLC
+# Author: Waldo Ketonou | WaldoSphere Group
 # Purpose: Extract and visualize feature importance from RF models
 # Requires: 07_model_training.R
 # =====================================================================
