@@ -1,6 +1,6 @@
 ---
 title: "04 – Feature Importance Analysis"
-author: "Waldo Ketonou | WaldoSphere Group LLC"
+author: "Waldo Ketonou | WaldoSphere Group"
 output: html_document
 ---
 
