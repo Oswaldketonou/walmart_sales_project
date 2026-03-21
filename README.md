@@ -131,11 +131,16 @@ This demonstrates how forecasting models support **strategic decision‑making**
 ---
 
 ## 📁 Repository Structure  
-/data
-/notebooks
-/sql
-/visuals
-/tableau_eda
+|---/data
+
+|---/notebooks
+
+|---/sql
+
+|---/visuals
+
+|---/tableau_eda
+
 README.md
 
 ---
