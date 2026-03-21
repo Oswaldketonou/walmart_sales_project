@@ -134,43 +134,78 @@ This demonstrates how forecasting models support **strategic decision‑making**
 
 walmart_sales_project/
 │
-├── data/                     # Raw and cleaned datasets (excluded from GitHub if large)
-│
-├── notebooks/                # R Markdown notebooks for modeling, evaluation, and case study
-│   ├── 06_final_case_study.Rmd
-│   ├── 06_model_evaluation.R
-│   ├── 07_model_training.R
-│   ├── 08_model_compare_and_visualize.R
-│   ├── 09_feature_importance.R
-│   └── 10_simulation_scenarios.R
-│
-├── sql/                      # SQL scripts for data engineering and feature creation
-│   ├── 03_feature_engineering.sql
-│   └── other SQL scripts...
-│
-├── visuals/                  # Model diagnostics + final storytelling visuals
-│   ├── actual_vs_predicted.png
-│   ├── residuals.png
-│   ├── feature_importance.png
-│   └── comparison_plots.png
-│
-├── tableau_eda/              # Tableau exploratory analysis snapshots + EDA visuals
-│   └── readme.md
-│
-├── outputs/                  # Evaluation outputs, metrics, and scenario results
-│   └── evaluation/
-│       ├── rf_small3_metrics.csv
-│       └── other evaluation files...
-│
-├── models/                   # Model artifacts or documentation (no large binaries)
-│   └── README.md
-│
-├── docs/                     # Documentation files (if any)
-│
-├── .gitignore                # Git ignore rules
-│
-└── README.md                 # Main project documentation
 
+├── data/                     # Raw and cleaned datasets (excluded from GitHub if large)
+
+│
+
+├── notebooks/                # R Markdown notebooks for modeling, evaluation, and case study
+
+│   ├── 06_final_case_study.Rmd
+
+│   ├── 06_model_evaluation.R
+
+│   ├── 07_model_training.R
+
+│   ├── 08_model_compare_and_visualize.R
+
+│   ├── 09_feature_importance.R
+
+│   └── 10_simulation_scenarios.R
+
+│
+
+├── sql/                      # SQL scripts for data engineering and feature creation
+
+│   ├── 03_feature_engineering.sql
+
+│   └── other SQL scripts...
+
+│
+
+├── visuals/                  # Model diagnostics + final storytelling visuals
+
+│   ├── actual_vs_predicted.png
+
+│   ├── residuals.png
+
+│   ├── feature_importance.png
+
+│   └── comparison_plots.png
+
+│
+
+├── tableau_eda/              # Tableau exploratory analysis snapshots + EDA visuals
+
+│   └── readme.md
+
+│
+
+├── outputs/                  # Evaluation outputs, metrics, and scenario results
+
+│   └── evaluation/
+
+│       ├── rf_small3_metrics.csv
+
+│       └── other evaluation files...
+
+│
+
+├── models/                   # Model artifacts or documentation (no large binaries)
+
+│   └── README.md
+
+│
+
+├── docs/                     # Documentation files (if any)
+
+│
+
+├── .gitignore                # Git ignore rules
+
+│
+
+└── README.md                 # Main project documentation
 
 
 ---
