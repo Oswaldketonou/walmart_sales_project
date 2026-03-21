@@ -1,6 +1,6 @@
 /* ============================================================
    INSIGHTS NOTEBOOK – Walmart Sales Forecasting Project
-   Author: Waldo Ketonou
+   Author: Waldo Ketonou | WaldoSphere Group
    Purpose: Store insight-driven SQL queries and commentary
    ============================================================ */
 
