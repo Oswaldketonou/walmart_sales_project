@@ -1,7 +1,7 @@
 # =====================================================================
 # Walmart Sales Forecasting Project
 # 07_model_training.R
-# Author: Waldo Ketonou | WaldoSphere Group LLC
+# Author: Waldo Ketonou | WaldoSphere Group
 # Purpose: Train baseline linear model + RF scaling experiments
 # =====================================================================
 
