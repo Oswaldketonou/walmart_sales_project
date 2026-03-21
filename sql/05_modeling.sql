@@ -1,7 +1,7 @@
 -- =====================================================================
 -- Walmart Sales Forecasting Project
 -- 05_modeling.sql
--- Author: Waldo Ketonou | WaldoSphere Group LLC
+-- Author: Waldo Ketonou | WaldoSphere Group
 -- Purpose: Create clean modeling dataset for R modeling
 -- Notes: This reflects the exact workflow used in PostgreSQL
 -- =====================================================================
