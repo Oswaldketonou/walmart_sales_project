@@ -1,7 +1,7 @@
 # =====================================================================
 # Walmart Sales Forecasting Project
 # 06_model_evaluation.R
-# Author: Waldo Ketonou | WaldoSphere Group LLC
+# Author: Waldo Ketonou | WaldoSphere Group
 # Purpose: Connect to PostgreSQL, load modeling_clean, save CSV, evaluate
 # =====================================================================
 
