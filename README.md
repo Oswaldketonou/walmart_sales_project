@@ -197,9 +197,11 @@ walmart_sales_project/
 
 │
 
-├── docs/                     # Documentation files (if any)
+├── docs/                     # Documentation files
 
-│
+│   └── case_study.md         # Full narrative case study
+
+|   └── modeling_strategy.md  # detailed modeling strategy document
 
 ├── .gitignore                # Git ignore rules
 
