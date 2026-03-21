@@ -285,6 +285,6 @@ This forecasting system equips Walmart with a data-driven foundation for invento
 
 ## 📌 Author  
 **Waldo Ketonou**  
-WaldoSphere Group LLC  
+WaldoSphere Group
 Springfield, MO
 
