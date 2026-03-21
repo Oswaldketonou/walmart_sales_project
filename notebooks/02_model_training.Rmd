@@ -1,6 +1,6 @@
 ---
 title: "02 – Model Training Notebook"
-author: "Waldo Ketonou | WaldoSphere Group LLC"
+author: "Waldo Ketonou | WaldoSphere Group"
 output: html_document
 ---
 
