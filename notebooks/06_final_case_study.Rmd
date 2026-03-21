@@ -1,6 +1,6 @@
 ---
 title: "06 — Final Case Study: Walmart Weekly Sales Forecasting"
-author: "Waldo Ketonou | WaldoSphere Group LLC"
+author: "Waldo Ketonou | WaldoSphere Group"
 output: html_document
 ---
 
