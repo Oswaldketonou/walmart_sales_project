@@ -1,7 +1,7 @@
 # =====================================================================
 # Walmart Sales Forecasting Project
 # 08_model_compare_and_visualize.R
-# Author: Waldo Ketonou | WaldoSphere Group LLC
+# Author: Waldo Ketonou | WaldoSphere Group
 # Purpose: Compare model performance + generate evaluation visualizations
 # Requires: 06_model_evaluation.R and 07_model_training.R
 # =====================================================================
