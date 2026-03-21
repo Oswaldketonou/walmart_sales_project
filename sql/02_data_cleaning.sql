@@ -1,7 +1,7 @@
 -- =====================================================================
 -- Walmart Sales Forecasting Project
 -- 02_data_cleaning.sql
--- Author: Waldo Ketonou | WaldoSphere Group LLC
+-- Author: Waldo Ketonou | WaldoSphere Group
 -- Purpose: Clean raw walmart_sales table before feature engineering
 -- =====================================================================
 
