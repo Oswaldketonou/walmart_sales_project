@@ -7,6 +7,16 @@ A full end‑to‑end forecasting pipeline built to model Walmart weekly sales u
 
 ---
 
+## 📊 Interactive Tableau Dashboard  
+Explore the full Walmart Sales Performance Dashboard (2010–2012):
+
+👉 **[View on Tableau Public](https://public.tableau.com/views/walmartSalesPerformanceDashoard2010-2012/KeyPerformanceIndicators2010-2012)**
+
+This dashboard visualizes key performance indicators, seasonal patterns, holiday effects, and store‑level trends.  
+A `/tableau_eda` folder in this repository contains supporting snapshots and exploratory visuals.
+
+---
+
 ## 📌 Project Overview  
 This project forecasts Walmart weekly sales using:
 
@@ -121,6 +131,12 @@ This demonstrates how forecasting models support **strategic decision‑making**
 ---
 
 ## 📁 Repository Structure  
+/data
+/notebooks
+/sql
+/visuals
+/tableau_eda
+README.md
 
 ---
 
@@ -142,31 +158,34 @@ Examples:
 - CPI decreases improve sales, especially in lower‑income regions  
 - Temperature increases have a moderate but consistent effect  
 
+---
+
 ## 🧭 Final Business Recommendations
 
-### 1. Strengthen Inventory and Staffing Around Seasonal Peaks
+### 1. Strengthen Inventory and Staffing Around Seasonal Peaks  
 Sales rise steadily from late Q1 through mid‑summer and surge again in December. Increasing inventory buffers, optimizing replenishment cycles, and adjusting staffing levels during these periods will reduce stockouts and improve customer experience.
 
-### 2. Prioritize High‑Revenue Departments in Forecasting and Operations
+### 2. Prioritize High‑Revenue Departments in Forecasting and Operations  
 A small number of departments generate most of Walmart’s revenue. These categories should receive more granular forecasting, targeted promotions, and tighter inventory controls to maximize ROI and reduce lost sales opportunities.
 
-### 3. Expand Holiday‑Focused Promotions and Preparedness
+### 3. Expand Holiday‑Focused Promotions and Preparedness  
 Holiday weeks consistently produce the strongest sales spikes. Walmart should intensify promotional activity, expand holiday‑specific assortments, and position inventory earlier to fully capture these high‑margin periods.
 
-### 4. Deploy Markdown Strategies More Strategically
+### 4. Deploy Markdown Strategies More Strategically  
 Markdown weeks show higher average sales, especially in price‑sensitive categories. Walmart should time markdowns around seasonal transitions and inventory clearance windows to stimulate demand without unnecessary margin loss.
 
-### 5. Adjust Pricing and Promotions Based on Economic Conditions
+### 5. Adjust Pricing and Promotions Based on Economic Conditions  
 Fuel prices, CPI, and unemployment show meaningful correlations with sales. Walmart should incorporate these indicators into pricing and promotional strategies to maintain customer traffic during periods of economic pressure.
 
-### 6. Improve Forecast Accuracy for Extreme Demand Weeks
+### 6. Improve Forecast Accuracy for Extreme Demand Weeks  
 The model underpredicts holiday spikes and overpredicts low‑demand weeks. Enhancing features related to holidays, markdown intensity, and store‑level effects will improve accuracy where it matters most for operations.
 
-### 7. Use Scenario Simulations for Strategic Planning
+### 7. Use Scenario Simulations for Strategic Planning  
 Scenario testing (fuel +10%, CPI –10%, temperature shifts, holiday promotions, combined shocks) shows how external conditions impact sales. Walmart can use these simulations to plan for economic shifts, optimize pricing, and prepare for market disruptions.
 
-## 🧾 Executive Summary
+---
 
+## 🧾 Executive Summary  
 This project delivers a full end‑to‑end forecasting pipeline designed to model Walmart’s weekly sales using production‑grade analytics practices. The workflow integrates PostgreSQL for data engineering, R for modeling and scenario simulation, and Power BI for business storytelling. The final model—built through linear regression and scaled Random Forest experiments up to 1M rows—captures long‑term trends, seasonal patterns, holiday effects, markdown impacts, and macroeconomic conditions.
 
 The analysis reveals strong seasonal cycles, significant holiday-driven demand spikes, and meaningful sensitivity to markdown activity and economic indicators such as fuel prices, CPI, and unemployment. Scenario simulations demonstrate how external shocks and promotional strategies influence sales, providing actionable insights for operational planning.
@@ -195,5 +214,5 @@ This forecasting system equips Walmart with a data-driven foundation for invento
 ## 📌 Author  
 **Waldo Ketonou**  
 WaldoSphere Group LLC  
-Springfield, MO  
+Springfield, MO
 
