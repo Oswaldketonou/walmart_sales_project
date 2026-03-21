@@ -1,5 +1,5 @@
 -- Walmart Sales Forecasting: Data Validation Script
--- Author: Waldo Ketonou | WaldoSphere Group LLC
+-- Author: Waldo Ketonou | WaldoSphere Group
 -- Purpose: Validate schema, data types, nulls, and key constraints before cleaning
 
 -- 1. Inspect table structure
