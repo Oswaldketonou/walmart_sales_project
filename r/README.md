@@ -144,5 +144,5 @@ This separation mirrors real analytics engineering practices and keeps the proje
 
 ## 📌 Author
 **Waldo Ketonou**  
-WaldoSphere Group LLC  
+WaldoSphere Group
 Springfield, MO
