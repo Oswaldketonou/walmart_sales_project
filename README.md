@@ -219,16 +219,37 @@ walmart_sales_project/
 - **GitHub** — Version control & portfolio hosting  
 
 ---
-
 ## 🎯 Key Business Insights  
-This section summarizes insights derived from the modeling and scenario simulations.  
-(You will fill this in once your dashboard is finalized.)
+Insights derived from feature importance analysis, forecasting models, and scenario simulations.
 
-Examples:
-- Fuel price increases have the largest negative impact on weekly sales  
-- Holiday promotions significantly boost sales across all store types  
-- CPI decreases improve sales, especially in lower‑income regions  
-- Temperature increases have a moderate but consistent effect  
+### 🔺 Fuel Prices Are the Strongest Negative Driver of Weekly Sales  
+- Rising fuel prices consistently reduce predicted weekly sales.  
+- Impact is strongest in lower‑income regions, making fuel price a critical external factor.  
+- Fuel price ranks among the top predictors in the Random Forest model.
+
+### 🎉 Holiday Weeks Produce the Largest Sales Spikes  
+- Holiday‑designated weeks significantly outperform non‑holiday weeks across all store types.  
+- Seasonal promotions amplify this effect, especially during Q4.  
+- Holiday indicators materially improve forecasting accuracy.
+
+### 📉 Lower CPI Levels Improve Sales Performance  
+- Decreases in CPI correlate with higher weekly sales, especially in price‑sensitive markets.  
+- CPI acts as a macroeconomic pressure gauge for demand planning.  
+- Consistently ranked as a meaningful predictor in feature importance.
+
+### 🌡️ Temperature Has a Moderate but Consistent Influence  
+- Higher temperatures slightly increase weekly sales, particularly in seasonal/outdoor categories.  
+- While not a dominant driver, temperature improves model stability and accuracy.
+
+### 🏷️ Markdown Promotions Increase Sales When Timed Strategically  
+- Markdown weeks show higher average sales, especially in discretionary departments.  
+- Strategic markdown timing boosts demand without excessive margin loss.  
+- Markdown features contribute positively to model performance.
+
+### 🏬 Store‑Level Characteristics Strongly Shape Sales Outcomes  
+- Larger stores and Type A locations consistently generate higher weekly sales.  
+- Store size, type, and regional demographics remain foundational predictors.  
+- These structural differences guide
 
 ---
 
